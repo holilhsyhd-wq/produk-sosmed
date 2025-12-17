@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Barmods Store</title>
+
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.box{
+  max-width:360px;
+  margin:80px auto;
+  background:#0f172a;
+  padding:20px;
+  border-radius:16px;
+}
+h2{text-align:center;margin-top:0}
+input{
+  width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border-radius:8px;
+  border:none;
+}
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:#22c55e;
+  font-weight:bold;
+  cursor:pointer;
+}
+a{
+  color:#38bdf8;
+  text-decoration:none;
+  font-size:13px;
+}
+.small{
+  text-align:center;
+  margin-top:10px;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Login</h2>
+
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+
+  <div class="small">
+    <a href="reset-password.html">Lupa password?</a><br><br>
+    Belum punya akun? <a href="register.html">Daftar</a>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed",
+  storageBucket: "barmods-allsosmed.appspot.com",
+  messagingSenderId: "864045617186",
+  appId: "1:864045617186:web:de246e8f46321015327a7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.login = async function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if(!email || !password){
+    alert("Isi email dan password");
+    return;
+  }
+
+  try{
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Login berhasil");
+    location.href = "index.html";
+  }catch(err){
+    alert("Login gagal: " + err.message);
+  }
+}
+</script>
+
+</body>
+</html>
