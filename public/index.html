@@ -6,279 +6,123 @@
 <title>Barmods Store</title>
 
 <style>
-:root{
-  --bg:#020617;
-  --card:#0f172a;
-  --accent:#38bdf8;
-  --green:#22c55e;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
-}
-.wrapper{
-  max-width:900px;
-  margin:auto;
-  padding:16px;
-  padding-bottom:80px;
-}
+body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
+.wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:80px}
+.header{background:linear-gradient(135deg,#2563eb,#38bdf8);padding:18px;border-radius:16px;margin-bottom:16px}
+.card{background:#0f172a;padding:14px;border-radius:14px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{width:100%;padding:10px;border:none;border-radius:20px;background:#22c55e;font-weight:bold}
+.nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);background:#020617}
+.nav a{color:#94a3b8;text-align:center;padding:12px 0;text-decoration:none;font-size:12px}
+.nav a.active{color:#38bdf8;font-weight:bold}
 
-/* HEADER */
-.header{
-  background:linear-gradient(135deg,#2563eb,#38bdf8);
-  padding:18px;
-  border-radius:16px;
-  margin-bottom:16px;
-}
-.header h1{margin:0}
-.header p{margin:6px 0 0;font-size:13px}
-
-/* SALDO */
-.info{
-  background:var(--card);
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:16px;
-}
-.info b{font-size:18px}
-
-/* ACCORDION */
-.accordion{
-  background:var(--card);
-  border-radius:14px;
-  margin-bottom:12px;
-}
-.acc-title{
-  padding:14px;
-  font-weight:bold;
-  cursor:pointer;
-}
-.acc-content{
-  display:none;
-  padding:12px;
-}
-
-/* PRODUCT */
-.row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:10px;
-}
-.card{
-  background:#020617;
-  padding:12px;
-  border-radius:12px;
-}
-.card h4{margin:0;font-size:14px}
-.price{margin:6px 0;font-weight:bold}
-button{
-  width:100%;
-  padding:8px;
-  border:none;
-  border-radius:20px;
-  background:var(--green);
-  font-weight:bold;
-  cursor:pointer;
-}
-
-/* BOTTOM NAV */
-.nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:#020617;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  border-top:1px solid #0f172a;
-}
-.nav a{
-  padding:12px 0;
-  text-align:center;
-  color:var(--muted);
-  text-decoration:none;
-  font-size:12px;
-}
-.nav a.active{
-  color:var(--accent);
-  font-weight:bold;
-}
-
-/* RESPONSIVE */
-@media(max-width:600px){
-  .row{grid-template-columns:1fr}
-}
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
+#modalBox{background:#0f172a;padding:16px;border-radius:14px;width:90%;max-width:400px}
+#modalBox input{width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-
-  <!-- HEADER -->
   <div class="header">
-    <h1>Barmods Store</h1>
-    <p>Suntik All Sosmed</p>
+    <h2>Barmods Store</h2>
+    <div>Saldo: <b id="saldo">Rp 0</b></div>
   </div>
 
-  <!-- SALDO -->
-  <div class="info">
-    Saldo kamu:<br>
-    <b id="saldo">Rp 0</b>
+  <div class="card">
+    <h3>Followers TikTok</h3>
+    <div class="row">
+      <button onclick="order('100 Followers TikTok',5000,'tt_follow')">100 - Rp5.000</button>
+      <button onclick="order('200 Followers TikTok',10000,'tt_follow')">200 - Rp10.000</button>
+    </div>
   </div>
 
-  <!-- FOLLOWERS -->
-  <div class="accordion">
-    <div class="acc-title" onclick="toggle(this)">Followers</div>
-    <div class="acc-content" id="followers"></div>
+  <div class="card">
+    <h3>Views Instagram</h3>
+    <div class="row">
+      <button onclick="order('1000 Views IG',2500,'ig_view')">1000 - Rp2.500</button>
+      <button onclick="order('2000 Views IG',5000,'ig_view')">2000 - Rp5.000</button>
+    </div>
   </div>
-
-  <!-- VIEWS -->
-  <div class="accordion">
-    <div class="acc-title" onclick="toggle(this)">Views</div>
-    <div class="acc-content" id="views"></div>
-  </div>
-
-  <!-- LIKES -->
-  <div class="accordion">
-    <div class="acc-title" onclick="toggle(this)">Likes</div>
-    <div class="acc-content" id="likes"></div>
-  </div>
-
-  <!-- WHATSAPP -->
-  <div class="accordion">
-    <div class="acc-title" onclick="toggle(this)">Member Saluran WhatsApp</div>
-    <div class="acc-content" id="wa"></div>
-  </div>
-
 </div>
 
-<!-- BOTTOM NAV -->
+<!-- NAV -->
 <div class="nav">
-  <a href="index.html" class="active">Store</a>
+  <a class="active" href="index.html">Store</a>
   <a href="wallet.html">Wallet</a>
   <a href="orders.html">Orders</a>
   <a href="profile.html">Profile</a>
 </div>
 
-<!-- FIREBASE + LOGIC -->
+<!-- MODAL ORDER -->
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <input id="modalInput" placeholder="">
+    <button onclick="submitOrder()">Buat Pesanan</button>
+  </div>
+</div>
+
 <script type="module">
-/* ===== FIREBASE ===== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore,doc,getDoc,updateDoc,addDoc,collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain: "barmods-allsosmed.firebaseapp.com",
-  projectId: "barmods-allsosmed",
-  storageBucket: "barmods-allsosmed.appspot.com",
-  messagingSenderId: "864045617186",
-  appId: "1:864045617186:web:de246e8f46321015327a7b"
+const firebaseConfig={
+ apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+ authDomain:"barmods-allsosmed.firebaseapp.com",
+ projectId:"barmods-allsosmed",
+ storageBucket:"barmods-allsosmed.appspot.com",
+ messagingSenderId:"864045617186",
+ appId:"1:864045617186:web:de246e8f46321015327a7b"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-/* ===== CEK LOGIN & SALDO ===== */
-onAuthStateChanged(auth, async user=>{
-  if(!user){
-    location.href="login.html";
-    return;
-  }
-  const snap = await getDoc(doc(db,"users",user.uid));
-  if(snap.exists()){
-    document.getElementById("saldo").innerText =
-      "Rp " + snap.data().balance.toLocaleString("id-ID");
-  }
+let userData,orderPrice,orderName;
+
+onAuthStateChanged(auth,async user=>{
+ if(!user) location.href="login.html";
+ const snap=await getDoc(doc(db,"users",user.uid));
+ userData={id:user.uid,...snap.data()};
+ document.getElementById("saldo").innerText="Rp "+userData.balance.toLocaleString("id-ID");
 });
 
-/* ===== UI ===== */
-function toggle(el){
-  const c = el.nextElementSibling;
-  c.style.display = c.style.display==="block"?"none":"block";
+window.order=function(name,price,type){
+ orderName=name; orderPrice=price;
+ const i=document.getElementById("modalInput");
+ if(type==="tt_follow") i.placeholder="Username TikTok";
+ if(type==="ig_view") i.placeholder="Link Video Instagram";
+ document.getElementById("modalTitle").innerText=name;
+ document.getElementById("modal").style.display="flex";
 }
-window.toggle = toggle;
 
-const followers=[100,200,300,400,500,600,700,800,900,1000];
-const views=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000];
-const rupiah=n=>"Rp "+n.toLocaleString("id-ID");
+window.submitOrder=async function(){
+ const val=document.getElementById("modalInput").value;
+ if(!val) return alert("Wajib diisi");
+ if(userData.balance<orderPrice) return alert("Saldo tidak cukup");
 
-/* FOLLOWERS */
-followers.forEach((q,i)=>{
-  document.getElementById("followers").innerHTML+=`
-    <div class="row">
-      <div class="card">
-        <h4>${q} Followers TikTok</h4>
-        <div class="price">${rupiah(5000*(i+1))}</div>
-        <button onclick="order('${q} Followers TikTok')">Order</button>
-      </div>
-      <div class="card">
-        <h4>${q} Followers Instagram</h4>
-        <div class="price">${rupiah(5500*(i+1))}</div>
-        <button onclick="order('${q} Followers Instagram')">Order</button>
-      </div>
-    </div>`;
-});
+ await updateDoc(doc(db,"users",userData.id),{
+  balance:userData.balance-orderPrice
+ });
 
-/* VIEWS */
-views.forEach((q,i)=>{
-  document.getElementById("views").innerHTML+=`
-    <div class="row">
-      <div class="card">
-        <h4>${q} Views TikTok</h4>
-        <div class="price">${rupiah(2000*(i+1))}</div>
-        <button onclick="order('${q} Views TikTok')">Order</button>
-      </div>
-      <div class="card">
-        <h4>${q} Views Instagram</h4>
-        <div class="price">${rupiah(2500*(i+1))}</div>
-        <button onclick="order('${q} Views Instagram')">Order</button>
-      </div>
-    </div>`;
-});
+ await addDoc(collection(db,"orders"),{
+  userId:userData.id,
+  product:orderName,
+  input:val,
+  price:orderPrice,
+  status:"pending",
+  createdAt:new Date()
+ });
 
-/* LIKES */
-followers.forEach((q,i)=>{
-  document.getElementById("likes").innerHTML+=`
-    <div class="row">
-      <div class="card">
-        <h4>${q} Likes TikTok</h4>
-        <div class="price">${rupiah(2000*(i+1))}</div>
-        <button onclick="order('${q} Likes TikTok')">Order</button>
-      </div>
-      <div class="card">
-        <h4>${q} Likes Instagram</h4>
-        <div class="price">${rupiah(2500*(i+1))}</div>
-        <button onclick="order('${q} Likes Instagram')">Order</button>
-      </div>
-    </div>`;
-});
-
-/* WHATSAPP */
-followers.forEach((q,i)=>{
-  document.getElementById("wa").innerHTML+=`
-    <div class="card" style="margin-bottom:10px">
-      <h4>${q} Member Saluran WhatsApp</h4>
-      <div class="price">${rupiah(8000*(i+1))}</div>
-      <button onclick="order('${q} Member WhatsApp')">Order</button>
-    </div>`;
-});
-
-window.order = function(name){
-  alert(
-    "Order dibuat (sementara)\n\nProduk: "+name+
-    "\n\nSelanjutnya akan disambung ke sistem order Firebase"
-  );
-};
+ alert("Order berhasil, status PENDING");
+ location.reload();
+}
 </script>
 
 </body>
-  </html>
+</html>
