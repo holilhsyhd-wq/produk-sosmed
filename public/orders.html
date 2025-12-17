@@ -1,131 +1,39 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orders - Barmods Store</title>
-
-<style>
-body{
-  margin:0;
-  background:#020617;
-  color:#e5e7eb;
-  font-family:Arial,Helvetica,sans-serif;
-}
-.wrapper{
-  max-width:420px;
-  margin:40px auto;
-  padding:16px;
-}
-.card{
-  background:#0f172a;
-  border-radius:16px;
-  padding:14px;
-  margin-bottom:12px;
-}
-h2{
-  text-align:center;
-  margin-top:0;
-}
-.item{
-  background:#020617;
-  padding:10px;
-  border-radius:10px;
-  margin-top:8px;
-  font-size:14px;
-}
-.status{
-  margin-top:6px;
-  font-weight:bold;
-}
-.pending{color:#facc15}
-.process{color:#38bdf8}
-.success{color:#22c55e}
-.error{color:#ef4444}
-.small{
-  font-size:12px;
-  color:#94a3b8;
-}
-a{
-  display:block;
-  text-align:center;
-  margin-top:14px;
-  color:#38bdf8;
-  text-decoration:none;
-  font-size:13px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="wrapper">
-
-  <div class="card">
-    <h2>Orders</h2>
-    <div class="small">Riwayat pesanan kamu</div>
-  </div>
-
-  <div id="list"></div>
-
-  <a href="index.html">← Kembali ke Store</a>
-
-</div>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore,collection,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain: "barmods-allsosmed.firebaseapp.com",
-  projectId: "barmods-allsosmed",
-  storageBucket: "barmods-allsosmed.appspot.com",
-  messagingSenderId: "864045617186",
-  appId: "1:864045617186:web:de246e8f46321015327a7b"
+const firebaseConfig={
+ apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+ authDomain:"barmods-allsosmed.firebaseapp.com",
+ projectId:"barmods-allsosmed",
+ storageBucket:"barmods-allsosmed.appspot.com",
+ messagingSenderId:"864045617186",
+ appId:"1:864045617186:web:de246e8f46321015327a7b"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-onAuthStateChanged(auth, async user=>{
-  if(!user){
-    location.href="login.html";
-    return;
+onAuthStateChanged(auth,async user=>{
+ if(!user){location.href="login.html";return;}
+
+ const snap=await getDocs(collection(db,"orders"));
+ const list=document.getElementById("list");
+ list.innerHTML="";
+
+ snap.forEach(doc=>{
+  const d=doc.data();
+  if(d.userId===user.uid){
+   list.innerHTML+=`
+    <div class="card">
+     <b>${d.product}</b><br>
+     Input: ${d.input}<br>
+     Harga: Rp ${d.price.toLocaleString("id-ID")}<br>
+     Status: <b>${d.status}</b>
+    </div>`;
   }
-
-  const q = query(
-    collection(db,"orders"),
-    where("userId","==",user.uid),
-    orderBy("createdAt","desc")
-  );
-
-  const snap = await getDocs(q);
-  const list = document.getElementById("list");
-
-  if(snap.empty){
-    list.innerHTML = "<div class='small' style='text-align:center'>Belum ada order</div>";
-    return;
-  }
-
-  snap.forEach(doc=>{
-    const d = doc.data();
-    list.innerHTML += `
-      <div class="card">
-        <div class="item">
-          <b>${d.product}</b><br>
-          <span class="small">Harga: Rp ${d.price.toLocaleString("id-ID")}</span>
-        </div>
-        <div class="status ${d.status}">
-          Status: ${d.status.toUpperCase()}
-        </div>
-      </div>
-    `;
-  });
+ });
 });
 </script>
-
-</body>
-</html>
