@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile - Barmods Store</title>
+
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.wrapper{
+  max-width:400px;
+  margin:60px auto;
+  background:#0f172a;
+  padding:20px;
+  border-radius:16px;
+}
+h2{
+  text-align:center;
+  margin-top:0;
+}
+.item{
+  background:#020617;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:10px;
+  font-size:14px;
+}
+.item span{
+  color:#94a3b8;
+  font-size:12px;
+}
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:#ef4444;
+  font-weight:bold;
+  cursor:pointer;
+  margin-top:12px;
+}
+a{
+  display:block;
+  text-align:center;
+  margin-top:14px;
+  color:#38bdf8;
+  text-decoration:none;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+  <h2>Profile</h2>
+
+  <div class="item">
+    <span>Username</span><br>
+    <b id="username">-</b>
+  </div>
+
+  <div class="item">
+    <span>Email</span><br>
+    <b id="email">-</b>
+  </div>
+
+  <div class="item">
+    <span>Nomor HP</span><br>
+    <b id="phone">-</b>
+  </div>
+
+  <div class="item">
+    <span>Saldo</span><br>
+    <b id="balance">Rp 0</b>
+  </div>
+
+  <button onclick="logout()">Logout</button>
+
+  <a href="index.html">← Kembali ke Store</a>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed",
+  storageBucket: "barmods-allsosmed.appspot.com",
+  messagingSenderId: "864045617186",
+  appId: "1:864045617186:web:de246e8f46321015327a7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+onAuthStateChanged(auth, async user=>{
+  if(!user){
+    location.href = "login.html";
+    return;
+  }
+
+  document.getElementById("email").innerText = user.email;
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(snap.exists()){
+    const data = snap.data();
+    document.getElementById("username").innerText = data.username;
+    document.getElementById("phone").innerText = data.phone;
+    document.getElementById("balance").innerText =
+      "Rp " + data.balance.toLocaleString("id-ID");
+  }
+});
+
+window.logout = async function(){
+  await signOut(auth);
+  location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
