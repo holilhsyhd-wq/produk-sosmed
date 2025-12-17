@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Barmods Store</title>
+
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.wrapper{
+  max-width:900px;
+  margin:30px auto;
+  padding:16px;
+}
+h2{margin-top:0}
+.card{
+  background:#0f172a;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:16px;
+}
+.item{
+  background:#020617;
+  padding:12px;
+  border-radius:10px;
+  margin-top:10px;
+  font-size:14px;
+}
+button{
+  padding:6px 10px;
+  border:none;
+  border-radius:10px;
+  margin-right:6px;
+  cursor:pointer;
+  font-size:12px;
+}
+.acc{background:#22c55e}
+.proc{background:#38bdf8}
+.err{background:#ef4444}
+.logout{
+  background:#ef4444;
+  float:right;
+}
+.small{font-size:12px;color:#94a3b8}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <button class="logout" onclick="logout()">Logout</button>
+  <h2>Admin Dashboard</h2>
+
+  <!-- DEPOSIT -->
+  <div class="card">
+    <h3>Deposit Pending</h3>
+    <div id="deposits" class="small">Loading...</div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="card">
+    <h3>Orders</h3>
+    <div id="orders" class="small">Loading...</div>
+  </div>
+
+</div>
+
+<script type="module">
+/* ==== PROTEKSI ADMIN ==== */
+if(localStorage.getItem("adminLogin") !== "true"){
+  location.href="login-admin.html";
+}
+
+/* ==== FIREBASE ==== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed",
+  storageBucket: "barmods-allsosmed.appspot.com",
+  messagingSenderId: "864045617186",
+  appId: "1:864045617186:web:de246e8f46321015327a7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ==== LOGOUT ==== */
+window.logout = function(){
+  localStorage.removeItem("adminLogin");
+  location.href="login-admin.html";
+};
+
+/* ==== LOAD DEPOSIT ==== */
+async function loadDeposits(){
+  const q = query(collection(db,"deposits"), where("status","==","pending"));
+  const snap = await getDocs(q);
+  const box = document.getElementById("deposits");
+  box.innerHTML = "";
+
+  if(snap.empty){
+    box.innerHTML = "Tidak ada deposit pending";
+    return;
+  }
+
+  snap.forEach(d=>{
+    const data = d.data();
+    box.innerHTML += `
+      <div class="item">
+        User: ${data.userId}<br>
+        Nominal: Rp ${data.amount.toLocaleString("id-ID")}<br>
+        Pengirim: ${data.senderName}<br>
+        <button class="acc" onclick="approveDeposit('${d.id}','${data.userId}',${data.amount})">
+          ACC
+        </button>
+      </div>
+    `;
+  });
+}
+
+/* ==== APPROVE DEPOSIT ==== */
+window.approveDeposit = async function(depositId, userId, amount){
+  const userRef = doc(db,"users",userId);
+  const userSnap = await getDoc(userRef);
+  const saldo = userSnap.data().balance || 0;
+
+  await updateDoc(userRef,{
+    balance: saldo + amount
+  });
+
+  await updateDoc(doc(db,"deposits",depositId),{
+    status:"success"
+  });
+
+  alert("Deposit di-ACC");
+  loadDeposits();
+};
+
+/* ==== LOAD ORDERS ==== */
+async function loadOrders(){
+  const snap = await getDocs(collection(db,"orders"));
+  const box = document.getElementById("orders");
+  box.innerHTML = "";
+
+  if(snap.empty){
+    box.innerHTML = "Belum ada order";
+    return;
+  }
+
+  snap.forEach(d=>{
+    const data = d.data();
+    box.innerHTML += `
+      <div class="item">
+        Produk: <b>${data.product}</b><br>
+        Harga: Rp ${data.price.toLocaleString("id-ID")}<br>
+        User: ${data.userId}<br>
+        Status: <b>${data.status}</b><br><br>
+        <button class="proc" onclick="updateOrder('${d.id}','process')">Process</button>
+        <button class="acc" onclick="updateOrder('${d.id}','success')">Success</button>
+        <button class="err" onclick="updateOrder('${d.id}','error')">Error</button>
+      </div>
+    `;
+  });
+}
+
+/* ==== UPDATE ORDER ==== */
+window.updateOrder = async function(orderId,status){
+  await updateDoc(doc(db,"orders",orderId),{
+    status: status
+  });
+  alert("Order diubah ke " + status);
+  loadOrders();
+};
+
+loadDeposits();
+loadOrders();
+</script>
+
+</body>
+</html>
