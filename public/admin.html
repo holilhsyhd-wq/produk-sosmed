@@ -3,39 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Barmods</title>
+<title>Admin Produk - Barmods</title>
 
 <style>
 body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
-.wrapper{max-width:1000px;margin:auto;padding:16px}
+.wrapper{max-width:900px;margin:auto;padding:16px}
 .card{background:#0f172a;padding:14px;border-radius:14px;margin-bottom:14px}
 .item{background:#020617;padding:10px;border-radius:10px;margin-top:10px}
-button{padding:6px 10px;border:none;border-radius:10px;font-size:12px;margin-right:4px}
-.p{background:#facc15}.pr{background:#38bdf8}.s{background:#22c55e}.e{background:#ef4444}
+input{width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px}
+button{padding:6px 10px;border:none;border-radius:8px;margin-top:6px}
+.save{background:#22c55e}
+.del{background:#ef4444}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-<h2>Admin Dashboard</h2>
+<h2>Admin – Produk</h2>
 
 <div class="card">
-<h3>Users</h3>
-<div id="users"></div>
+  <h3>Daftar Produk</h3>
+  <div id="list"></div>
 </div>
 
 <div class="card">
-<h3>Orders</h3>
-<div id="orders"></div>
+  <h3>Tambah Produk</h3>
+  <input id="name" placeholder="Nama Produk">
+  <input id="price" type="number" placeholder="Harga">
+  <input id="type" placeholder="Type (tt_follow, ig_view, dll)">
+  <input id="cat" placeholder="Category (followers, views, likes, wa)">
+  <button class="save" onclick="add()">Tambah Produk</button>
 </div>
 </div>
 
 <script type="module">
-if(localStorage.getItem("adminLogin")!=="true") location.href="login-admin.html";
+if(localStorage.getItem("adminLogin")!=="true"){
+  location.href="login-admin.html";
+}
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore,collection,getDocs,doc,updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+ getFirestore,collection,getDocs,addDoc,updateDoc,deleteDoc,doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig={
  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
@@ -49,45 +59,53 @@ const firebaseConfig={
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-/* USERS */
-const usersSnap=await getDocs(collection(db,"users"));
-usersSnap.forEach(u=>{
- const d=u.data();
- document.getElementById("users").innerHTML+=`
-  <div class="item">
-   ${d.username} | Rp ${d.balance.toLocaleString("id-ID")}
-   <button onclick="editSaldo('${u.id}',${d.balance})">Edit</button>
-  </div>`;
+const box=document.getElementById("list");
+
+/* LOAD */
+const snap=await getDocs(collection(db,"products"));
+snap.forEach(p=>{
+ const d=p.data();
+ box.innerHTML+=`
+ <div class="item">
+  <b>${d.name}</b><br>
+  Nama:
+  <input value="${d.name}" onchange="updName('${p.id}',this.value)">
+  Harga:
+  <input value="${d.price}" onchange="updPrice('${p.id}',this.value)">
+  <button class="del" onclick="delProd('${p.id}')">Hapus</button>
+ </div>`;
 });
 
-/* ORDERS */
-const orderSnap=await getDocs(collection(db,"orders"));
-orderSnap.forEach(o=>{
- const d=o.data();
- document.getElementById("orders").innerHTML+=`
-  <div class="item">
-   <b>${d.product}</b><br>
-   Input: ${d.input}<br>
-   Status: ${d.status}<br>
-   <button class="p" onclick="set('${o.id}','pending')">P</button>
-   <button class="pr" onclick="set('${o.id}','process')">PR</button>
-   <button class="s" onclick="set('${o.id}','success')">S</button>
-   <button class="e" onclick="set('${o.id}','error')">E</button>
-  </div>`;
-});
+/* UPDATE */
+window.updName=async(id,val)=>{
+ await updateDoc(doc(db,"products",id),{name:val});
+};
+window.updPrice=async(id,val)=>{
+ await updateDoc(doc(db,"products",id),{price:Number(val)});
+};
 
-window.set=async(id,s)=>{
- await updateDoc(doc(db,"orders",id),{status:s});
+/* ADD */
+window.add=async()=>{
+ if(!name.value||!price.value||!type.value||!cat.value)
+  return alert("Lengkapi data");
+
+ await addDoc(collection(db,"products"),{
+  name:name.value,
+  price:Number(price.value),
+  type:type.value,
+  category:cat.value,
+  active:true
+ });
  location.reload();
-}
+};
 
-window.editSaldo=async(id,now)=>{
- const v=prompt("Saldo baru:",now);
- if(v!==null){
-  await updateDoc(doc(db,"users",id),{balance:Number(v)});
+/* DELETE */
+window.delProd=async(id)=>{
+ if(confirm("Hapus produk?")){
+  await deleteDoc(doc(db,"products",id));
   location.reload();
  }
-}
+};
 </script>
 
 </body>
