@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wallet - Barmods Store</title>
+
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.wrapper{
+  max-width:420px;
+  margin:40px auto;
+  padding:16px;
+}
+.card{
+  background:#0f172a;
+  border-radius:16px;
+  padding:16px;
+  margin-bottom:14px;
+}
+h2{
+  text-align:center;
+  margin-top:0;
+}
+.balance{
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
+}
+.small{
+  font-size:13px;
+  color:#94a3b8;
+  text-align:center;
+}
+input{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:8px;
+  border:none;
+}
+button{
+  width:100%;
+  padding:10px;
+  margin-top:12px;
+  border:none;
+  border-radius:20px;
+  background:#22c55e;
+  font-weight:bold;
+  cursor:pointer;
+}
+.copy{
+  background:#020617;
+  padding:10px;
+  border-radius:10px;
+  margin-top:10px;
+  font-size:14px;
+}
+a{
+  display:block;
+  text-align:center;
+  margin-top:14px;
+  color:#38bdf8;
+  text-decoration:none;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+  <div class="card">
+    <h2>Wallet</h2>
+    <div class="small">Saldo kamu</div>
+    <div class="balance" id="balance">Rp 0</div>
+  </div>
+
+  <div class="card">
+    <h3>Deposit via DANA</h3>
+    <div class="copy">
+      <b>Nomor:</b><br>
+      6285973928253<br><br>
+      <b>Nama:</b><br>
+      Muhamad Barhudin<br><br>
+      <b>Minimal deposit:</b> Rp 5.000
+    </div>
+
+    <input type="number" id="amount" placeholder="Nominal deposit (min 5000)">
+    <input type="text" id="sender" placeholder="Nama pengirim DANA">
+
+    <button onclick="deposit()">Saya Sudah Transfer</button>
+  </div>
+
+  <a href="index.html">← Kembali ke Store</a>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed",
+  storageBucket: "barmods-allsosmed.appspot.com",
+  messagingSenderId: "864045617186",
+  appId: "1:864045617186:web:de246e8f46321015327a7b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async user=>{
+  if(!user){
+    location.href="login.html";
+    return;
+  }
+  currentUser = user;
+
+  const snap = await getDoc(doc(db,"users",user.uid));
+  if(snap.exists()){
+    document.getElementById("balance").innerText =
+      "Rp " + snap.data().balance.toLocaleString("id-ID");
+  }
+});
+
+window.deposit = async function(){
+  const amount = Number(document.getElementById("amount").value);
+  const sender = document.getElementById("sender").value;
+
+  if(amount < 5000){
+    alert("Minimal deposit Rp 5.000");
+    return;
+  }
+  if(!sender){
+    alert("Nama pengirim wajib diisi");
+    return;
+  }
+
+  await addDoc(collection(db,"deposits"),{
+    userId: currentUser.uid,
+    amount: amount,
+    senderName: sender,
+    status: "pending",
+    createdAt: new Date()
+  });
+
+  alert("Deposit berhasil dikirim.\nStatus: PENDING\nSaldo akan masuk setelah dicek admin.");
+  document.getElementById("amount").value="";
+  document.getElementById("sender").value="";
+};
+</script>
+
+</body>
+</html>
