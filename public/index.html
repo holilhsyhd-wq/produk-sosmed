@@ -6,46 +6,106 @@
 <title>Barmods Store</title>
 
 <style>
-body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
-.wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:80px}
-.header{background:linear-gradient(135deg,#2563eb,#38bdf8);padding:18px;border-radius:16px;margin-bottom:16px}
-.card{background:#0f172a;padding:14px;border-radius:14px;margin-bottom:12px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{width:100%;padding:10px;border:none;border-radius:20px;background:#22c55e;font-weight:bold}
-.nav{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);background:#020617}
-.nav a{color:#94a3b8;text-align:center;padding:12px 0;text-decoration:none;font-size:12px}
-.nav a.active{color:#38bdf8;font-weight:bold}
+:root{
+  --bg:#020617;
+  --card:#0f172a;
+  --accent:#38bdf8;
+  --green:#22c55e;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial}
+.wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:90px}
+.header{
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  padding:18px;border-radius:16px;margin-bottom:16px
+}
+.info{
+  background:var(--card);padding:14px;border-radius:14px;margin-bottom:16px
+}
+.accordion{background:var(--card);border-radius:14px;margin-bottom:12px}
+.acc-title{padding:14px;font-weight:bold;cursor:pointer}
+.acc-content{display:none;padding:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.card{background:#020617;padding:12px;border-radius:12px}
+.card h4{margin:0;font-size:14px}
+.price{margin:6px 0;font-weight:bold}
+button{
+  width:100%;padding:8px;border:none;border-radius:20px;
+  background:var(--green);font-weight:bold;cursor:pointer
+}
+
+/* NAV */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#020617;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border-top:1px solid #0f172a
+}
+.nav a{
+  padding:12px 0;text-align:center;
+  color:var(--muted);text-decoration:none;font-size:12px
+}
+.nav a.active{color:var(--accent);font-weight:bold}
 
 /* MODAL */
-#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
-#modalBox{background:#0f172a;padding:16px;border-radius:14px;width:90%;max-width:400px}
-#modalBox input{width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px}
+#modal{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.7);
+  align-items:center;justify-content:center
+}
+#modalBox{
+  background:#0f172a;padding:16px;border-radius:14px;
+  width:90%;max-width:400px
+}
+#modalBox input{
+  width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px
+}
+
+@media(max-width:600px){
+  .row{grid-template-columns:1fr}
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
+
   <div class="header">
     <h2>Barmods Store</h2>
-    <div>Saldo: <b id="saldo">Rp 0</b></div>
+    <div>Suntik All Sosmed</div>
   </div>
 
-  <div class="card">
-    <h3>Followers TikTok</h3>
-    <div class="row">
-      <button onclick="order('100 Followers TikTok',5000,'tt_follow')">100 - Rp5.000</button>
-      <button onclick="order('200 Followers TikTok',10000,'tt_follow')">200 - Rp10.000</button>
-    </div>
+  <div class="info">
+    Saldo kamu:<br>
+    <b id="saldo">Rp 0</b>
   </div>
 
-  <div class="card">
-    <h3>Views Instagram</h3>
-    <div class="row">
-      <button onclick="order('1000 Views IG',2500,'ig_view')">1000 - Rp2.500</button>
-      <button onclick="order('2000 Views IG',5000,'ig_view')">2000 - Rp5.000</button>
-    </div>
+  <!-- FOLLOWERS -->
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Followers</div>
+    <div class="acc-content" id="followers"></div>
   </div>
+
+  <!-- VIEWS -->
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Views</div>
+    <div class="acc-content" id="views"></div>
+  </div>
+
+  <!-- LIKES -->
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Likes</div>
+    <div class="acc-content" id="likes"></div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Member Saluran WhatsApp</div>
+    <div class="acc-content" id="wa"></div>
+  </div>
+
 </div>
 
 <!-- NAV -->
@@ -60,7 +120,7 @@ button{width:100%;padding:10px;border:none;border-radius:20px;background:#22c55e
 <div id="modal">
   <div id="modalBox">
     <h3 id="modalTitle"></h3>
-    <input id="modalInput" placeholder="">
+    <input id="modalInput">
     <button onclick="submitOrder()">Buat Pesanan</button>
   </div>
 </div>
@@ -83,27 +143,101 @@ const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
-let userData,orderPrice,orderName;
+let userData={},orderName="",orderPrice=0,orderType="";
 
 onAuthStateChanged(auth,async user=>{
- if(!user) location.href="login.html";
+ if(!user){location.href="login.html";return;}
  const snap=await getDoc(doc(db,"users",user.uid));
  userData={id:user.uid,...snap.data()};
- document.getElementById("saldo").innerText="Rp "+userData.balance.toLocaleString("id-ID");
+ document.getElementById("saldo").innerText=
+  "Rp "+userData.balance.toLocaleString("id-ID");
+});
+
+window.toggle=function(el){
+ const c=el.nextElementSibling;
+ c.style.display=c.style.display==="block"?"none":"block";
+};
+
+const qtyFollow=[100,200,300,400,500,600,700,800,900,1000];
+const qtyView=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000];
+const rupiah=n=>"Rp "+n.toLocaleString("id-ID");
+
+/* FOLLOWERS */
+qtyFollow.forEach((q,i)=>{
+ followers.innerHTML+=`
+ <div class="row">
+  <div class="card">
+   <h4>${q} Followers TikTok</h4>
+   <div class="price">${rupiah(5000*(i+1))}</div>
+   <button onclick="order('${q} Followers TikTok',${5000*(i+1)},'tt_follow')">Order</button>
+  </div>
+  <div class="card">
+   <h4>${q} Followers Instagram</h4>
+   <div class="price">${rupiah(5500*(i+1))}</div>
+   <button onclick="order('${q} Followers Instagram',${5500*(i+1)},'ig_follow')">Order</button>
+  </div>
+ </div>`;
+});
+
+/* VIEWS */
+qtyView.forEach((q,i)=>{
+ views.innerHTML+=`
+ <div class="row">
+  <div class="card">
+   <h4>${q} Views TikTok</h4>
+   <div class="price">${rupiah(2000*(i+1))}</div>
+   <button onclick="order('${q} Views TikTok',${2000*(i+1)},'tt_view')">Order</button>
+  </div>
+  <div class="card">
+   <h4>${q} Views Instagram</h4>
+   <div class="price">${rupiah(2500*(i+1))}</div>
+   <button onclick="order('${q} Views Instagram',${2500*(i+1)},'ig_view')">Order</button>
+  </div>
+ </div>`;
+});
+
+/* LIKES */
+qtyFollow.forEach((q,i)=>{
+ likes.innerHTML+=`
+ <div class="row">
+  <div class="card">
+   <h4>${q} Likes TikTok</h4>
+   <div class="price">${rupiah(2000*(i+1))}</div>
+   <button onclick="order('${q} Likes TikTok',${2000*(i+1)},'tt_like')">Order</button>
+  </div>
+  <div class="card">
+   <h4>${q} Likes Instagram</h4>
+   <div class="price">${rupiah(2500*(i+1))}</div>
+   <button onclick="order('${q} Likes Instagram',${2500*(i+1)},'ig_like')">Order</button>
+  </div>
+ </div>`;
+});
+
+/* WA */
+qtyFollow.forEach((q,i)=>{
+ wa.innerHTML+=`
+ <div class="card" style="margin-bottom:10px">
+  <h4>${q} Member WhatsApp</h4>
+  <div class="price">${rupiah(8000*(i+1))}</div>
+  <button onclick="order('${q} Member WhatsApp',${8000*(i+1)},'wa')">Order</button>
+ </div>`;
 });
 
 window.order=function(name,price,type){
- orderName=name; orderPrice=price;
+ orderName=name;orderPrice=price;orderType=type;
  const i=document.getElementById("modalInput");
  if(type==="tt_follow") i.placeholder="Username TikTok";
- if(type==="ig_view") i.placeholder="Link Video Instagram";
+ if(type==="tt_like"||type==="tt_view") i.placeholder="Link Video TikTok";
+ if(type==="ig_follow") i.placeholder="Username Instagram";
+ if(type==="ig_like"||type==="ig_view") i.placeholder="Link Video Instagram";
+ if(type==="wa") i.placeholder="Link Saluran WhatsApp";
  document.getElementById("modalTitle").innerText=name;
- document.getElementById("modal").style.display="flex";
-}
+ modal.style.display="flex";
+};
 
 window.submitOrder=async function(){
- const val=document.getElementById("modalInput").value;
- if(!val) return alert("Wajib diisi");
+ const val=modalInput.value;
+ if(!val) return alert("Form wajib diisi");
  if(userData.balance<orderPrice) return alert("Saldo tidak cukup");
 
  await updateDoc(doc(db,"users",userData.id),{
@@ -119,9 +253,9 @@ window.submitOrder=async function(){
   createdAt:new Date()
  });
 
- alert("Order berhasil, status PENDING");
+ alert("Order berhasil (PENDING)");
  location.reload();
-}
+};
 </script>
 
 </body>
