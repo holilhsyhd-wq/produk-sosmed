@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login - Barmods Store</title>
+
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.box{
+  max-width:360px;
+  margin:100px auto;
+  background:#0f172a;
+  padding:20px;
+  border-radius:16px;
+}
+h2{
+  text-align:center;
+  margin-top:0;
+}
+input{
+  width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border-radius:8px;
+  border:none;
+}
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:#38bdf8;
+  font-weight:bold;
+  cursor:pointer;
+}
+.small{
+  text-align:center;
+  margin-top:12px;
+  font-size:13px;
+  color:#94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Admin Login</h2>
+
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+
+  <button onclick="loginAdmin()">Login</button>
+
+  <div class="small">
+    Barmods Admin Panel
+  </div>
+</div>
+
+<script>
+function loginAdmin(){
+  const user = document.getElementById("username").value;
+  const pass = document.getElementById("password").value;
+
+  if(user === "barmods" && pass === "barmods21"){
+    localStorage.setItem("adminLogin","true");
+    alert("Login admin berhasil");
+    location.href = "admin.html";
+  }else{
+    alert("Username atau password salah");
+  }
+}
+</script>
+
+</body>
+  </html>
