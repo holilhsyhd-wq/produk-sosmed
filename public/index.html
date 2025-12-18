@@ -1,75 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Seed Produk</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barmods Store</title>
+
+<style>
+:root{
+ --bg:#020617;--card:#0f172a;--accent:#38bdf8;
+ --green:#22c55e;--text:#e5e7eb;--muted:#94a3b8;
+}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial}
+.wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:90px}
+.header{background:linear-gradient(135deg,#2563eb,#38bdf8);padding:18px;border-radius:16px;margin-bottom:16px}
+.info{background:var(--card);padding:14px;border-radius:14px;margin-bottom:16px}
+.accordion{background:var(--card);border-radius:14px;margin-bottom:12px}
+.acc-title{padding:14px;font-weight:bold;cursor:pointer}
+.acc-content{display:none;padding:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.card{background:#020617;padding:12px;border-radius:12px}
+.card h4{margin:0;font-size:14px}
+.price{margin:6px 0;font-weight:bold}
+button{width:100%;padding:10px;border:none;border-radius:20px;background:var(--green);font-weight:bold}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#020617;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #0f172a}
+.nav a{padding:12px 0;text-align:center;color:var(--muted);text-decoration:none;font-size:12px}
+.nav a.active{color:var(--accent);font-weight:bold}
+
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
+#modalBox{background:#0f172a;padding:16px;border-radius:14px;width:90%;max-width:400px}
+#modalBox input{width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px}
+
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+</style>
 </head>
+
 <body>
-<h2>Seeding products...</h2>
+
+<div class="wrapper">
+
+  <div class="header">
+    <h2>Barmods Store</h2>
+    <div>Suntik All Sosmed</div>
+  </div>
+
+  <div class="info">
+    Saldo kamu:<br>
+    <b id="saldo">Rp 0</b>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Followers</div>
+    <div class="acc-content" id="followers"></div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Views</div>
+    <div class="acc-content" id="views"></div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Likes</div>
+    <div class="acc-content" id="likes"></div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-title" onclick="toggle(this)">Member Saluran WhatsApp</div>
+    <div class="acc-content" id="wa"></div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <a class="active" href="index.html">Store</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
+</div>
+
+<!-- MODAL ORDER -->
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <input id="modalInput">
+    <button onclick="submitOrder()">Buat Pesanan</button>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore,doc,getDoc,updateDoc,addDoc,collection,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain: "barmods-allsosmed.firebaseapp.com",
-  projectId: "barmods-allsosmed",
-  storageBucket: "barmods-allsosmed.appspot.com",
-  messagingSenderId: "864045617186",
-  appId: "1:864045617186:web:de246e8f46321015327a7b"
+const firebaseConfig={
+ apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+ authDomain:"barmods-allsosmed.firebaseapp.com",
+ projectId:"barmods-allsosmed",
+ storageBucket:"barmods-allsosmed.appspot.com",
+ messagingSenderId:"864045617186",
+ appId:"1:864045617186:web:de246e8f46321015327a7b"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-/* CEK BIAR TIDAK DOBEL */
-const snap = await getDocs(collection(db,"products"));
-if(!snap.empty){
-  document.body.innerHTML = "<h2>Produk sudah ada. Seed dibatalkan.</h2>";
-  throw "STOP";
-}
+let userData={},orderName="",orderPrice=0,orderType="";
 
-/* DATA PRODUK AUTO */
-const products = [];
-
-/* FOLLOWERS (100–1000) */
-[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
- products.push(
-  {name:`${q} Followers TikTok`,price:5000*(i+1),type:"tt_follow",category:"followers",active:true},
-  {name:`${q} Followers Instagram`,price:5500*(i+1),type:"ig_follow",category:"followers",active:true}
- );
+/* AUTH */
+onAuthStateChanged(auth,async user=>{
+ if(!user){location.href="login.html";return;}
+ const snap=await getDoc(doc(db,"users",user.uid));
+ userData={id:user.uid,...snap.data()};
+ saldo.innerText="Rp "+userData.balance.toLocaleString("id-ID");
 });
 
-/* VIEWS (1000–10000) */
-[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000].forEach((q,i)=>{
- products.push(
-  {name:`${q} Views TikTok`,price:2000*(i+1),type:"tt_view",category:"views",active:true},
-  {name:`${q} Views Instagram`,price:2500*(i+1),type:"ig_view",category:"views",active:true}
- );
+/* ACCORDION */
+window.toggle=function(el){
+ const c=el.nextElementSibling;
+ c.style.display=c.style.display==="block"?"none":"block";
+};
+
+/* LOAD PRODUK */
+const snap=await getDocs(collection(db,"products"));
+snap.forEach(p=>{
+ const d=p.data();
+ if(!d.active) return;
+
+ const html=`
+ <div class="card">
+  <h4>${d.name}</h4>
+  <div class="price">Rp ${d.price.toLocaleString("id-ID")}</div>
+  <button onclick="order('${d.name}',${d.price},'${d.type}')">Order</button>
+ </div>`;
+
+ if(d.category==="followers") followers.innerHTML+=html;
+ if(d.category==="views") views.innerHTML+=html;
+ if(d.category==="likes") likes.innerHTML+=html;
+ if(d.category==="wa") wa.innerHTML+=html;
 });
 
-/* LIKES */
-[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
- products.push(
-  {name:`${q} Likes TikTok`,price:2000*(i+1),type:"tt_like",category:"likes",active:true},
-  {name:`${q} Likes Instagram`,price:2500*(i+1),type:"ig_like",category:"likes",active:true}
- );
-});
+/* OPEN MODAL */
+window.order=function(name,price,type){
+ orderName=name;orderPrice=price;orderType=type;
 
-/* WHATSAPP */
-[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
- products.push(
-  {name:`${q} Member WhatsApp`,price:8000*(i+1),type:"wa",category:"wa",active:true}
- );
-});
+ if(type==="tt_follow") modalInput.placeholder="Username TikTok";
+ if(type==="tt_like"||type==="tt_view") modalInput.placeholder="Link Video TikTok";
+ if(type==="ig_follow") modalInput.placeholder="Username Instagram";
+ if(type==="ig_like"||type==="ig_view") modalInput.placeholder="Link Video Instagram";
+ if(type==="wa") modalInput.placeholder="Link Saluran WhatsApp";
 
-/* INSERT */
-for(const p of products){
- await addDoc(collection(db,"products"),p);
-}
+ modalTitle.innerText=name;
+ modalInput.value="";
+ modal.style.display="flex";
+};
 
-document.body.innerHTML = "<h2>✅ SEED PRODUK BERHASIL. SILAKAN TUTUP HALAMAN INI.</h2>";
+/* SUBMIT ORDER (FIXED) */
+window.submitOrder = async function(){
+ const val=modalInput.value;
+ if(!val){alert("Form wajib diisi");return;}
+ if(userData.balance<orderPrice){alert("Saldo tidak cukup");return;}
+
+ await updateDoc(doc(db,"users",userData.id),{
+  balance:userData.balance-orderPrice
+ });
+
+ await addDoc(collection(db,"orders"),{
+  userId:userData.id,
+  product:orderName,
+  input:val,
+  price:orderPrice,
+  status:"pending",
+  createdAt:new Date()
+ });
+
+ alert("Order berhasil (PENDING)");
+ modal.style.display="none";
+ location.reload();
+};
 </script>
+
 </body>
 </html>
