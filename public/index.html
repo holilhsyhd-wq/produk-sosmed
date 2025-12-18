@@ -1,165 +1,75 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barmods Store</title>
-
-<style>
-body{margin:0;font-family:Arial;background:#020617;color:#e5e7eb}
-.wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:90px}
-.header{background:linear-gradient(135deg,#2563eb,#38bdf8);padding:18px;border-radius:16px;margin-bottom:16px}
-.card{background:#0f172a;padding:14px;border-radius:14px;margin-bottom:12px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-button{width:100%;padding:10px;border:none;border-radius:20px;background:#22c55e;font-weight:bold}
-.price{margin:6px 0;font-weight:bold}
-.acc-title{font-weight:bold;cursor:pointer}
-.acc-content{display:none;margin-top:10px}
-
-/* NAV */
-.nav{position:fixed;bottom:0;left:0;right:0;background:#020617;display:grid;grid-template-columns:repeat(4,1fr)}
-.nav a{padding:12px 0;text-align:center;color:#94a3b8;text-decoration:none;font-size:12px}
-.nav a.active{color:#38bdf8;font-weight:bold}
-
-/* MODAL */
-#modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-#modalBox{
-  background:#0f172a;
-  padding:16px;
-  border-radius:14px;
-  width:90%;
-  max-width:400px;
-}
-#modalBox input{
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  margin-bottom:10px;
-}
-@media(max-width:600px){.row{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <title>Seed Produk</title>
 </head>
-
 <body>
-
-<div class="wrapper">
-  <div class="header">
-    <h2>Barmods Store</h2>
-    <div>Suntik All Sosmed</div>
-  </div>
-
-  <div class="card">Saldo kamu:<br><b id="saldo">Rp 0</b></div>
-
-  <div class="card">
-    <div class="acc-title" onclick="toggle(this)">Followers</div>
-    <div class="acc-content" id="followers"></div>
-  </div>
-</div>
-
-<div class="nav">
-  <a class="active">Store</a>
-  <a>Wallet</a>
-  <a>Orders</a>
-  <a>Profile</a>
-</div>
-
-<div id="modal">
-  <div id="modalBox">
-    <h3 id="modalTitle"></h3>
-    <input id="modalInput">
-    <button id="submitBtn">Buat Pesanan</button>
-  </div>
-</div>
+<h2>Seeding products...</h2>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore,doc,getDoc,updateDoc,addDoc,collection } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig={
-  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain:"barmods-allsosmed.firebaseapp.com",
-  projectId:"barmods-allsosmed",
-  appId:"1:864045617186:web:de246e8f46321015327a7b"
+const firebaseConfig = {
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed",
+  storageBucket: "barmods-allsosmed.appspot.com",
+  messagingSenderId: "864045617186",
+  appId: "1:864045617186:web:de246e8f46321015327a7b"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-let userData={},orderName="",orderPrice=0;
-
-/* AUTH */
-onAuthStateChanged(auth,async user=>{
-  const snap=await getDoc(doc(db,"users",user.uid));
-  userData={id:user.uid,...snap.data()};
-  saldo.innerText="Rp "+userData.balance.toLocaleString("id-ID");
-});
-
-/* ACCORDION */
-window.toggle=function(el){
-  const c=el.nextElementSibling;
-  c.style.display=c.style.display==="block"?"none":"block";
-};
-
-/* PRODUK */
-[100,200,300].forEach((q,i)=>{
- followers.innerHTML+=`
- <div class="row">
-  <div class="card">
-    <b>${q} Followers TikTok</b>
-    <div class="price">Rp ${(i+1)*5000}</div>
-    <button onclick="openOrder('${q} Followers TikTok',${(i+1)*5000})">Order</button>
-  </div>
- </div>`;
-});
-
-/* OPEN MODAL */
-window.openOrder=function(name,price){
-  orderName=name;
-  orderPrice=price;
-  modalTitle.innerText=name;
-  modalInput.value="";
-  modal.style.display="flex";
-};
-
-/* SUBMIT ORDER */
-async function submitOrder(){
-  if(!modalInput.value){alert("Wajib diisi");return;}
-  if(userData.balance<orderPrice){alert("Saldo tidak cukup");return;}
-
-  await updateDoc(doc(db,"users",userData.id),{
-    balance:userData.balance-orderPrice
-  });
-
-  await addDoc(collection(db,"orders"),{
-    userId:userData.id,
-    product:orderName,
-    input:modalInput.value,
-    price:orderPrice,
-    status:"pending",
-    createdAt:new Date()
-  });
-
-  alert("Order berhasil");
-  modal.style.display="none";
-  location.reload();
+/* CEK BIAR TIDAK DOBEL */
+const snap = await getDocs(collection(db,"products"));
+if(!snap.empty){
+  document.body.innerHTML = "<h2>Produk sudah ada. Seed dibatalkan.</h2>";
+  throw "STOP";
 }
 
-/* 🔥 BIND EVENT (INI KUNCI FIX) */
-document.getElementById("submitBtn")
-  .addEventListener("click", submitOrder);
-</script>
+/* DATA PRODUK AUTO */
+const products = [];
 
+/* FOLLOWERS (100–1000) */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Followers TikTok`,price:5000*(i+1),type:"tt_follow",category:"followers",active:true},
+  {name:`${q} Followers Instagram`,price:5500*(i+1),type:"ig_follow",category:"followers",active:true}
+ );
+});
+
+/* VIEWS (1000–10000) */
+[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Views TikTok`,price:2000*(i+1),type:"tt_view",category:"views",active:true},
+  {name:`${q} Views Instagram`,price:2500*(i+1),type:"ig_view",category:"views",active:true}
+ );
+});
+
+/* LIKES */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Likes TikTok`,price:2000*(i+1),type:"tt_like",category:"likes",active:true},
+  {name:`${q} Likes Instagram`,price:2500*(i+1),type:"ig_like",category:"likes",active:true}
+ );
+});
+
+/* WHATSAPP */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Member WhatsApp`,price:8000*(i+1),type:"wa",category:"wa",active:true}
+ );
+});
+
+/* INSERT */
+for(const p of products){
+ await addDoc(collection(db,"products"),p);
+}
+
+document.body.innerHTML = "<h2>✅ SEED PRODUK BERHASIL. SILAKAN TUTUP HALAMAN INI.</h2>";
+</script>
 </body>
 </html>
