@@ -3,118 +3,157 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orders - Barmods</title>
+<title>Riwayat Order - Barmods Store</title>
 
 <style>
 body{
   margin:0;
+  font-family:Arial,Helvetica,sans-serif;
   background:#020617;
   color:#e5e7eb;
-  font-family:Arial
 }
 .wrapper{
-  max-width:800px;
+  max-width:900px;
   margin:auto;
   padding:16px;
-  padding-bottom:80px
+  padding-bottom:90px;
 }
 .header{
-  background:#0f172a;
-  padding:16px;
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  padding:18px;
   border-radius:16px;
-  margin-bottom:16px
+  margin-bottom:16px;
 }
 .card{
-  background:#020617;
+  background:#0f172a;
   padding:14px;
   border-radius:14px;
   margin-bottom:12px;
-  border:1px solid #0f172a
 }
-.status{
-  font-weight:bold
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:12px;
+  font-weight:bold;
 }
-.pending{color:#facc15}
-.process{color:#38bdf8}
-.success{color:#22c55e}
-.error{color:#ef4444}
-a{color:#38bdf8;text-decoration:none}
+.pending{background:#facc15;color:#000}
+.process{background:#38bdf8;color:#000}
+.success{background:#22c55e;color:#000}
+.empty{
+  text-align:center;
+  color:#94a3b8;
+  margin-top:40px;
+}
+
+/* NAV */
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#020617;
+  border-top:1px solid #0f172a;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.nav a{
+  padding:12px 0;
+  text-align:center;
+  color:#94a3b8;
+  text-decoration:none;
+  font-size:12px;
+}
+.nav a.active{
+  color:#38bdf8;
+  font-weight:bold;
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-
   <div class="header">
-    <h2>Orders</h2>
-    <div>Riwayat pesanan kamu</div>
-    <br>
-    <a href="index.html">← Kembali ke Store</a>
+    <h2>Riwayat Order</h2>
+    <div>Pesanan kamu</div>
   </div>
 
-  <div id="list">
-    <div class="card">Memuat pesanan...</div>
+  <div id="orderList"></div>
+  <div id="empty" class="empty" style="display:none;">
+    Belum ada order
   </div>
-
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore,collection,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<div class="nav">
+  <a href="index.html">Store</a>
+  <a href="wallet.html">Wallet</a>
+  <a class="active" href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
+</div>
 
-const firebaseConfig={
-  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain:"barmods-allsosmed.firebaseapp.com",
-  projectId:"barmods-allsosmed",
-  storageBucket:"barmods-allsosmed.appspot.com",
-  messagingSenderId:"864045617186",
-  appId:"1:864045617186:web:de246e8f46321015327a7b"
-};
+<!-- FIREBASE V8 (STABIL DI HP) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
+<script>
+/* FIREBASE CONFIG */
+firebase.initializeApp({
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed"
+});
 
-onAuthStateChanged(auth, async user=>{
+const auth = firebase.auth();
+const db = firebase.firestore();
+const orderList = document.getElementById("orderList");
+const empty = document.getElementById("empty");
+
+/* AUTH CHECK */
+auth.onAuthStateChanged(user=>{
   if(!user){
     location.href="login.html";
     return;
   }
 
-  const box=document.getElementById("list");
-  box.innerHTML="";
-
-  const snap=await getDocs(collection(db,"orders"));
-  let ada=false;
-
-  snap.forEach(doc=>{
-    const d=doc.data();
-    if(d.userId===user.uid){
-      ada=true;
-      box.innerHTML+=`
-        <div class="card">
-          <b>${d.product}</b><br><br>
-          <small>Input:</small><br>
-          ${d.input}<br><br>
-          <small>Harga:</small> Rp ${d.price.toLocaleString("id-ID")}<br>
-          <small>Status:</small>
-          <span class="status ${d.status}">${d.status.toUpperCase()}</span>
-        </div>
-      `;
-    }
-  });
-
-  if(!ada){
-    box.innerHTML=`
-      <div class="card">
-        Belum ada pesanan.
-      </div>
-    `;
-  }
+  loadOrders(user.uid);
 });
+
+/* LOAD ORDERS */
+function loadOrders(uid){
+  db.collection("orders")
+    .where("userId","==",uid)
+    .orderBy("createdAt","desc")
+    .onSnapshot(snapshot=>{
+      orderList.innerHTML="";
+      if(snapshot.empty){
+        empty.style.display="block";
+        return;
+      }
+
+      empty.style.display="none";
+
+      snapshot.forEach(doc=>{
+        const o = doc.data();
+        const statusClass =
+          o.status==="pending" ? "pending" :
+          o.status==="process" ? "process" : "success";
+
+        orderList.innerHTML += `
+          <div class="card">
+            <b>${o.product}</b><br><br>
+            <div><b>Input:</b> ${o.input}</div>
+            <div><b>Harga:</b> Rp ${o.price.toLocaleString("id-ID")}</div>
+            <div style="margin-top:6px;">
+              <span class="badge ${statusClass}">
+                ${o.status.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        `;
+      });
+    });
+}
 </script>
 
 </body>
-</html>
+</html>4
