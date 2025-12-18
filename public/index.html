@@ -6,6 +6,7 @@
 <title>Barmods Store</title>
 
 <style>
+*{box-sizing:border-box}
 body{
   margin:0;
   font-family:Arial,Helvetica,sans-serif;
@@ -13,9 +14,16 @@ body{
   color:#e5e7eb;
 }
 .wrapper{
-  max-width:600px;
+  max-width:900px;
   margin:auto;
   padding:16px;
+  padding-bottom:90px;
+}
+.header{
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  padding:20px;
+  border-radius:18px;
+  margin-bottom:16px;
 }
 .card{
   background:#0f172a;
@@ -23,27 +31,49 @@ body{
   border-radius:16px;
   margin-bottom:14px;
 }
+.section-title{
+  font-weight:bold;
+  font-size:18px;
+  margin-bottom:10px;
+}
+.products{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.product{
+  background:#020617;
+  padding:14px;
+  border-radius:14px;
+}
+.price{
+  margin:6px 0;
+  font-weight:bold;
+}
 button{
   width:100%;
-  padding:14px;
+  padding:12px;
   border:none;
   border-radius:30px;
   background:#22c55e;
-  font-size:16px;
   font-weight:bold;
   cursor:pointer;
 }
+
+/* MODAL */
 #modal{
   display:none;
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.8);
+  display:flex;
   align-items:center;
   justify-content:center;
+  z-index:9999;
 }
 #modalBox{
   background:#0f172a;
-  padding:20px;
+  padding:18px;
   border-radius:16px;
   width:90%;
   max-width:400px;
@@ -55,75 +85,142 @@ button{
   border:none;
   margin-bottom:12px;
 }
+
+@media(max-width:600px){
+  .products{grid-template-columns:1fr}
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
+  <div class="header">
+    <h2>Barmods Store</h2>
+    <div>Suntik All Sosmed</div>
+  </div>
+
+  <!-- FOLLOWERS -->
   <div class="card">
-    <h2>100 Followers TikTok</h2>
-    <p>Harga: Rp 5.000</p>
-    <button id="orderBtn">ORDER SEKARANG</button>
+    <div class="section-title">Followers</div>
+    <div class="products" id="followers"></div>
+  </div>
+
+  <!-- VIEWS -->
+  <div class="card">
+    <div class="section-title">Views</div>
+    <div class="products" id="views"></div>
+  </div>
+
+  <!-- LIKES -->
+  <div class="card">
+    <div class="section-title">Likes</div>
+    <div class="products" id="likes"></div>
+  </div>
+
+  <!-- WHATSAPP -->
+  <div class="card">
+    <div class="section-title">Member Saluran WhatsApp</div>
+    <div class="products" id="whatsapp"></div>
   </div>
 </div>
 
 <!-- MODAL -->
 <div id="modal">
   <div id="modalBox">
-    <h3>Form Order</h3>
-    <input id="inputData" placeholder="Username TikTok">
-    <button id="submitBtn">BUAT PESANAN</button>
+    <h3 id="modalTitle"></h3>
+    <input id="orderInput" placeholder="">
+    <button id="submitBtn">Buat Pesanan</button>
   </div>
 </div>
 
-<!-- 🔥 FIREBASE COMPAT (AMAN DI HP) -->
+<!-- FIREBASE V8 (AMAN HP) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-/* 🔥 CONFIG FIREBASE (PUNYA KAMU) */
-var firebaseConfig = {
+/* FIREBASE CONFIG */
+firebase.initializeApp({
   apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
   authDomain: "barmods-allsosmed.firebaseapp.com",
   projectId: "barmods-allsosmed"
-};
-firebase.initializeApp(firebaseConfig);
-var db = firebase.firestore();
+});
+const db = firebase.firestore();
 
-/* ELEMENT */
-const orderBtn = document.getElementById("orderBtn");
-const modal = document.getElementById("modal");
-const submitBtn = document.getElementById("submitBtn");
-const inputData = document.getElementById("inputData");
+/* DATA PRODUK */
+const products = {
+  followers: [
+    {name:"100 Followers TikTok", price:5000, placeholder:"Username TikTok"},
+    {name:"200 Followers Instagram", price:11000, placeholder:"Username Instagram"}
+  ],
+  views: [
+    {name:"1000 Views TikTok", price:2000, placeholder:"Link Video TikTok"},
+    {name:"1000 Views Instagram", price:2500, placeholder:"Link Video Instagram"}
+  ],
+  likes: [
+    {name:"100 Likes TikTok", price:2000, placeholder:"Link Video TikTok"},
+    {name:"100 Likes Instagram", price:2500, placeholder:"Link Video Instagram"}
+  ],
+  whatsapp: [
+    {name:"100 Member WhatsApp", price:8000, placeholder:"Link Saluran WhatsApp"}
+  ]
+};
+
+let selectedProduct = null;
+
+/* RENDER PRODUK */
+function render(section,id){
+  const el = document.getElementById(id);
+  products[section].forEach(p=>{
+    el.innerHTML += `
+      <div class="product">
+        <b>${p.name}</b>
+        <div class="price">Rp ${p.price.toLocaleString("id-ID")}</div>
+        <button onclick="openOrder('${section}','${p.name}',${p.price},'${p.placeholder}')">
+          Order
+        </button>
+      </div>
+    `;
+  });
+}
+render("followers","followers");
+render("views","views");
+render("likes","likes");
+render("whatsapp","whatsapp");
 
 /* OPEN MODAL */
-orderBtn.addEventListener("click", function(){
+function openOrder(section,name,price,placeholder){
+  selectedProduct = {section,name,price};
+  document.getElementById("modalTitle").innerText = name;
+  const input = document.getElementById("orderInput");
+  input.placeholder = placeholder;
+  input.value = "";
   modal.style.display = "flex";
-});
+}
 
 /* SUBMIT ORDER */
-submitBtn.addEventListener("click", function(){
-  if(inputData.value === ""){
+document.getElementById("submitBtn").addEventListener("click",function(){
+  const val = orderInput.value.trim();
+  if(!val){
     alert("Form wajib diisi");
     return;
   }
 
   db.collection("orders").add({
-    product: "100 Followers TikTok",
-    input: inputData.value,
-    price: 5000,
+    product: selectedProduct.name,
+    category: selectedProduct.section,
+    input: val,
+    price: selectedProduct.price,
     status: "pending",
     createdAt: new Date()
-  }).then(function(){
-    alert("ORDER MASUK FIREBASE ✅");
+  }).then(()=>{
+    alert("Order berhasil, status PENDING");
     modal.style.display = "none";
-    inputData.value = "";
-  }).catch(function(error){
-    alert("Error: " + error.message);
+  }).catch(err=>{
+    alert(err.message);
   });
 });
 </script>
 
 </body>
-</html>
+  </html>
