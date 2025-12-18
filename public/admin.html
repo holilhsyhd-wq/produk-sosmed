@@ -3,109 +3,151 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Produk - Barmods</title>
+<title>Admin Panel - Barmods Store</title>
 
 <style>
-body{margin:0;background:#020617;color:#e5e7eb;font-family:Arial}
-.wrapper{max-width:900px;margin:auto;padding:16px}
-.card{background:#0f172a;padding:14px;border-radius:14px;margin-bottom:14px}
-.item{background:#020617;padding:10px;border-radius:10px;margin-top:10px}
-input{width:100%;padding:8px;border-radius:8px;border:none;margin-top:6px}
-button{padding:6px 10px;border:none;border-radius:8px;margin-top:6px}
-.save{background:#22c55e}
-.del{background:#ef4444}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#020617;
+  color:#e5e7eb;
+}
+.wrapper{
+  max-width:1000px;
+  margin:auto;
+  padding:16px;
+}
+.header{
+  background:linear-gradient(135deg,#dc2626,#f97316);
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:16px;
+}
+.card{
+  background:#0f172a;
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:12px;
+}
+button{
+  padding:8px 14px;
+  border:none;
+  border-radius:14px;
+  font-weight:bold;
+  cursor:pointer;
+  margin-right:6px;
+}
+.pending{background:#facc15;color:#000}
+.process{background:#38bdf8;color:#000}
+.success{background:#22c55e;color:#000}
+.lock{
+  position:fixed;
+  inset:0;
+  background:#020617;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.lockBox{
+  background:#0f172a;
+  padding:20px;
+  border-radius:16px;
+  width:90%;
+  max-width:360px;
+}
+.lockBox input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  margin-bottom:12px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="wrapper">
-<h2>Admin – Produk</h2>
-
-<div class="card">
-  <h3>Daftar Produk</h3>
-  <div id="list"></div>
+<!-- LOGIN ADMIN -->
+<div id="lock" class="lock">
+  <div class="lockBox">
+    <h3>Admin Login</h3>
+    <input id="adminUser" placeholder="Username">
+    <input id="adminPass" type="password" placeholder="Password">
+    <button onclick="loginAdmin()">Login</button>
+  </div>
 </div>
 
-<div class="card">
-  <h3>Tambah Produk</h3>
-  <input id="name" placeholder="Nama Produk">
-  <input id="price" type="number" placeholder="Harga">
-  <input id="type" placeholder="Type (tt_follow, ig_view, dll)">
-  <input id="cat" placeholder="Category (followers, views, likes, wa)">
-  <button class="save" onclick="add()">Tambah Produk</button>
-</div>
+<div class="wrapper" id="panel" style="display:none;">
+
+  <div class="header">
+    <h2>Admin Panel</h2>
+    <div>Kelola Order</div>
+  </div>
+
+  <div id="orders"></div>
+
 </div>
 
-<script type="module">
-if(localStorage.getItem("adminLogin")!=="true"){
-  location.href="login-admin.html";
+<!-- FIREBASE V8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+/* LOGIN ADMIN HARD CODE */
+function loginAdmin(){
+  const u = adminUser.value;
+  const p = adminPass.value;
+  if(u==="barmods" && p==="barmods21"){
+    lock.style.display="none";
+    panel.style.display="block";
+    loadOrders();
+  }else{
+    alert("Login admin salah");
+  }
 }
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
- getFirestore,collection,getDocs,addDoc,updateDoc,deleteDoc,doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig={
- apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
- authDomain:"barmods-allsosmed.firebaseapp.com",
- projectId:"barmods-allsosmed",
- storageBucket:"barmods-allsosmed.appspot.com",
- messagingSenderId:"864045617186",
- appId:"1:864045617186:web:de246e8f46321015327a7b"
-};
-
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-
-const box=document.getElementById("list");
-
-/* LOAD */
-const snap=await getDocs(collection(db,"products"));
-snap.forEach(p=>{
- const d=p.data();
- box.innerHTML+=`
- <div class="item">
-  <b>${d.name}</b><br>
-  Nama:
-  <input value="${d.name}" onchange="updName('${p.id}',this.value)">
-  Harga:
-  <input value="${d.price}" onchange="updPrice('${p.id}',this.value)">
-  <button class="del" onclick="delProd('${p.id}')">Hapus</button>
- </div>`;
+/* FIREBASE CONFIG */
+firebase.initializeApp({
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed"
 });
+const db = firebase.firestore();
+const ordersEl = document.getElementById("orders");
 
-/* UPDATE */
-window.updName=async(id,val)=>{
- await updateDoc(doc(db,"products",id),{name:val});
-};
-window.updPrice=async(id,val)=>{
- await updateDoc(doc(db,"products",id),{price:Number(val)});
-};
+/* LOAD ORDERS */
+function loadOrders(){
+  db.collection("orders")
+    .orderBy("createdAt","desc")
+    .onSnapshot(snapshot=>{
+      ordersEl.innerHTML="";
+      snapshot.forEach(doc=>{
+        const o = doc.data();
+        ordersEl.innerHTML += `
+          <div class="card">
+            <b>${o.product}</b><br><br>
+            <div><b>User ID:</b> ${o.userId || "-"}</div>
+            <div><b>Input:</b> ${o.input}</div>
+            <div><b>Harga:</b> Rp ${o.price.toLocaleString("id-ID")}</div>
+            <div style="margin:10px 0;">
+              <button class="pending" onclick="setStatus('${doc.id}','pending')">Pending</button>
+              <button class="process" onclick="setStatus('${doc.id}','process')">Proses</button>
+              <button class="success" onclick="setStatus('${doc.id}','success')">Sukses</button>
+            </div>
+          </div>
+        `;
+      });
+    });
+}
 
-/* ADD */
-window.add=async()=>{
- if(!name.value||!price.value||!type.value||!cat.value)
-  return alert("Lengkapi data");
-
- await addDoc(collection(db,"products"),{
-  name:name.value,
-  price:Number(price.value),
-  type:type.value,
-  category:cat.value,
-  active:true
- });
- location.reload();
-};
-
-/* DELETE */
-window.delProd=async(id)=>{
- if(confirm("Hapus produk?")){
-  await deleteDoc(doc(db,"products",id));
-  location.reload();
- }
-};
+/* UPDATE STATUS */
+function setStatus(id,status){
+  db.collection("orders").doc(id).update({
+    status: status
+  }).then(()=>{
+    alert("Status diubah ke " + status);
+  });
+}
 </script>
 
 </body>
