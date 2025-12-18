@@ -12,11 +12,7 @@ body{
   background:#020617;
   color:#e5e7eb;
 }
-.wrapper{
-  max-width:1000px;
-  margin:auto;
-  padding:16px;
-}
+.wrapper{max-width:1200px;margin:auto;padding:16px}
 .header{
   background:linear-gradient(135deg,#dc2626,#f97316);
   padding:18px;
@@ -30,61 +26,69 @@ body{
   margin-bottom:12px;
 }
 button{
-  padding:8px 14px;
+  padding:6px 12px;
   border:none;
-  border-radius:14px;
+  border-radius:12px;
   font-weight:bold;
   cursor:pointer;
-  margin-right:6px;
+  margin:2px;
 }
 .pending{background:#facc15;color:#000}
 .process{background:#38bdf8;color:#000}
 .success{background:#22c55e;color:#000}
-.lock{
-  position:fixed;
-  inset:0;
-  background:#020617;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.lockBox{
-  background:#0f172a;
-  padding:20px;
-  border-radius:16px;
-  width:90%;
-  max-width:360px;
-}
-.lockBox input{
+.error{background:#ef4444;color:#fff}
+input,select{
   width:100%;
-  padding:12px;
-  border-radius:10px;
+  padding:8px;
+  border-radius:8px;
   border:none;
-  margin-bottom:12px;
+  margin-bottom:6px;
 }
+.tabs{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:6px;
+  margin-bottom:10px;
+}
+.tabs button{background:#020617;color:#94a3b8}
+.tabs button.active{background:#38bdf8;color:#000}
+.hide{display:none}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN ADMIN -->
-<div id="lock" class="lock">
-  <div class="lockBox">
+<!-- LOGIN -->
+<div id="loginBox" class="wrapper">
+  <div class="card">
     <h3>Admin Login</h3>
-    <input id="adminUser" placeholder="Username">
-    <input id="adminPass" type="password" placeholder="Password">
-    <button onclick="loginAdmin()">Login</button>
+    <input id="u" placeholder="Username">
+    <input id="p" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
   </div>
 </div>
 
-<div class="wrapper" id="panel" style="display:none;">
+<!-- PANEL -->
+<div id="panel" class="wrapper hide">
 
   <div class="header">
     <h2>Admin Panel</h2>
-    <div>Kelola Order</div>
+    <div>Barmods Store Control</div>
+  </div>
+
+  <div class="tabs">
+    <button onclick="tab('orders')" class="active">Orders</button>
+    <button onclick="tab('deposits')">Deposits</button>
+    <button onclick="tab('users')">Users</button>
+    <button onclick="tab('products')">Products</button>
+    <button onclick="tab('add')">Add Product</button>
   </div>
 
   <div id="orders"></div>
+  <div id="deposits" class="hide"></div>
+  <div id="users" class="hide"></div>
+  <div id="products" class="hide"></div>
+  <div id="add" class="hide"></div>
 
 </div>
 
@@ -93,60 +97,140 @@ button{
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
 <script>
-/* LOGIN ADMIN HARD CODE */
-function loginAdmin(){
-  const u = adminUser.value;
-  const p = adminPass.value;
-  if(u==="barmods" && p==="barmods21"){
-    lock.style.display="none";
-    panel.style.display="block";
-    loadOrders();
-  }else{
-    alert("Login admin salah");
-  }
-}
-
-/* FIREBASE CONFIG */
 firebase.initializeApp({
-  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain: "barmods-allsosmed.firebaseapp.com",
-  projectId: "barmods-allsosmed"
+  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain:"barmods-allsosmed.firebaseapp.com",
+  projectId:"barmods-allsosmed"
 });
-const db = firebase.firestore();
-const ordersEl = document.getElementById("orders");
+const db=firebase.firestore();
 
-/* LOAD ORDERS */
-function loadOrders(){
-  db.collection("orders")
-    .orderBy("createdAt","desc")
-    .onSnapshot(snapshot=>{
-      ordersEl.innerHTML="";
-      snapshot.forEach(doc=>{
-        const o = doc.data();
-        ordersEl.innerHTML += `
-          <div class="card">
-            <b>${o.product}</b><br><br>
-            <div><b>User ID:</b> ${o.userId || "-"}</div>
-            <div><b>Input:</b> ${o.input}</div>
-            <div><b>Harga:</b> Rp ${o.price.toLocaleString("id-ID")}</div>
-            <div style="margin:10px 0;">
-              <button class="pending" onclick="setStatus('${doc.id}','pending')">Pending</button>
-              <button class="process" onclick="setStatus('${doc.id}','process')">Proses</button>
-              <button class="success" onclick="setStatus('${doc.id}','success')">Sukses</button>
-            </div>
-          </div>
-        `;
-      });
-    });
+/* LOGIN */
+function login(){
+  if(u.value==="barmods" && p.value==="barmods21"){
+    loginBox.classList.add("hide");
+    panel.classList.remove("hide");
+    loadOrders();loadDeposits();loadUsers();loadProducts();addForm();
+  }else alert("Login salah");
 }
 
-/* UPDATE STATUS */
-function setStatus(id,status){
-  db.collection("orders").doc(id).update({
-    status: status
-  }).then(()=>{
-    alert("Status diubah ke " + status);
+/* TAB */
+function tab(id){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+  ["orders","deposits","users","products","add"].forEach(x=>{
+    document.getElementById(x).classList.add("hide");
   });
+  document.getElementById(id).classList.remove("hide");
+}
+
+/* ORDERS */
+function loadOrders(){
+  db.collection("orders").orderBy("createdAt","desc")
+  .onSnapshot(s=>{
+    orders.innerHTML="";
+    s.forEach(d=>{
+      const o=d.data();
+      orders.innerHTML+=`
+      <div class="card">
+        <b>${o.product}</b><br>
+        ${o.input}<br>
+        Rp ${o.price.toLocaleString("id-ID")}<br>
+        <button class="pending" onclick="setOrder('${d.id}','pending')">Pending</button>
+        <button class="process" onclick="setOrder('${d.id}','process')">Process</button>
+        <button class="success" onclick="setOrder('${d.id}','success')">Success</button>
+        <button class="error" onclick="setOrder('${d.id}','error')">Error</button>
+      </div>`;
+    });
+  });
+}
+function setOrder(id,s){
+  db.collection("orders").doc(id).update({status:s});
+}
+
+/* DEPOSITS */
+function loadDeposits(){
+  db.collection("deposits").orderBy("createdAt","desc")
+  .onSnapshot(s=>{
+    deposits.innerHTML="";
+    s.forEach(d=>{
+      const x=d.data();
+      deposits.innerHTML+=`
+      <div class="card">
+        ${x.sender} - Rp ${x.amount.toLocaleString("id-ID")}<br>
+        <button class="success" onclick="approveDeposit('${d.id}','${x.userId}',${x.amount})">
+          Approve
+        </button>
+      </div>`;
+    });
+  });
+}
+async function approveDeposit(id,uid,amt){
+  await db.collection("deposits").doc(id).update({status:"success"});
+  const u=await db.collection("users").doc(uid).get();
+  await db.collection("users").doc(uid).update({
+    balance:(u.data().balance||0)+amt
+  });
+}
+
+/* USERS */
+function loadUsers(){
+  db.collection("users").onSnapshot(s=>{
+    users.innerHTML="";
+    s.forEach(d=>{
+      const u=d.data();
+      users.innerHTML+=`
+      <div class="card">
+        ${u.email||"-"}<br>
+        Balance: Rp ${(u.balance||0).toLocaleString("id-ID")}<br>
+        <input placeholder="Tambah / Kurang" type="number" id="b${d.id}">
+        <button onclick="updateBalance('${d.id}')">Update</button>
+      </div>`;
+    });
+  });
+}
+function updateBalance(id){
+  const v=parseInt(document.getElementById("b"+id).value);
+  db.collection("users").doc(id).update({balance:v});
+}
+
+/* PRODUCTS */
+function loadProducts(){
+  db.collection("products").onSnapshot(s=>{
+    products.innerHTML="";
+    s.forEach(d=>{
+      const p=d.data();
+      products.innerHTML+=`
+      <div class="card">
+        <input value="${p.name}" id="n${d.id}">
+        <input value="${p.price}" type="number" id="p${d.id}">
+        <button onclick="saveProduct('${d.id}')">Save</button>
+      </div>`;
+    });
+  });
+}
+function saveProduct(id){
+  db.collection("products").doc(id).update({
+    name:document.getElementById("n"+id).value,
+    price:parseInt(document.getElementById("p"+id).value)
+  });
+}
+
+/* ADD PRODUCT */
+function addForm(){
+  add.innerHTML=`
+  <div class="card">
+    <input id="an" placeholder="Nama Produk">
+    <input id="ap" type="number" placeholder="Harga">
+    <button onclick="addProduct()">Tambah</button>
+  </div>`;
+}
+function addProduct(){
+  db.collection("products").add({
+    name:an.value,
+    price:parseInt(ap.value),
+    active:true
+  });
+  an.value="";ap.value="";
 }
 </script>
 
