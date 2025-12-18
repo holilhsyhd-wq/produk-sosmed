@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barmods Store - Test</title>
+<title>Barmods Store</title>
 
 <style>
 body{
@@ -77,14 +77,27 @@ button{
   </div>
 </div>
 
+<!-- 🔥 FIREBASE COMPAT (AMAN DI HP) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
 <script>
-/* AMBIL ELEMENT */
+/* 🔥 CONFIG FIREBASE (PUNYA KAMU) */
+var firebaseConfig = {
+  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain: "barmods-allsosmed.firebaseapp.com",
+  projectId: "barmods-allsosmed"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+
+/* ELEMENT */
 const orderBtn = document.getElementById("orderBtn");
 const modal = document.getElementById("modal");
 const submitBtn = document.getElementById("submitBtn");
 const inputData = document.getElementById("inputData");
 
-/* BUKA MODAL */
+/* OPEN MODAL */
 orderBtn.addEventListener("click", function(){
   modal.style.display = "flex";
 });
@@ -95,8 +108,20 @@ submitBtn.addEventListener("click", function(){
     alert("Form wajib diisi");
     return;
   }
-  alert("KLIK BERHASIL ✅\nData: " + inputData.value);
-  modal.style.display = "none";
+
+  db.collection("orders").add({
+    product: "100 Followers TikTok",
+    input: inputData.value,
+    price: 5000,
+    status: "pending",
+    createdAt: new Date()
+  }).then(function(){
+    alert("ORDER MASUK FIREBASE ✅");
+    modal.style.display = "none";
+    inputData.value = "";
+  }).catch(function(error){
+    alert("Error: " + error.message);
+  });
 });
 </script>
 
