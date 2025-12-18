@@ -6,12 +6,20 @@
 <title>Barmods Store</title>
 
 <style>
+:root{
+  --bg:#020617;
+  --card:#0f172a;
+  --accent:#38bdf8;
+  --green:#22c55e;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+}
 *{box-sizing:border-box}
 body{
   margin:0;
   font-family:Arial,Helvetica,sans-serif;
-  background:#020617;
-  color:#e5e7eb;
+  background:var(--bg);
+  color:var(--text);
 }
 .wrapper{
   max-width:900px;
@@ -21,30 +29,20 @@ body{
 }
 .header{
   background:linear-gradient(135deg,#2563eb,#38bdf8);
-  padding:20px;
-  border-radius:18px;
+  padding:18px;
+  border-radius:16px;
   margin-bottom:16px;
 }
 .card{
-  background:#0f172a;
-  padding:16px;
-  border-radius:16px;
-  margin-bottom:14px;
-}
-.section-title{
-  font-weight:bold;
-  font-size:18px;
-  margin-bottom:10px;
-}
-.products{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-.product{
-  background:#020617;
+  background:var(--card);
   padding:14px;
   border-radius:14px;
+  margin-bottom:12px;
+}
+.row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
 }
 .price{
   margin:6px 0;
@@ -52,42 +50,62 @@ body{
 }
 button{
   width:100%;
-  padding:12px;
+  padding:10px;
   border:none;
-  border-radius:30px;
-  background:#22c55e;
+  border-radius:20px;
+  background:var(--green);
   font-weight:bold;
   cursor:pointer;
 }
-
-/* MODAL */
+.acc-title{
+  font-weight:bold;
+  cursor:pointer;
+}
+.acc-content{
+  display:none;
+  margin-top:10px;
+}
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#020617;
+  border-top:1px solid #0f172a;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.nav a{
+  padding:12px 0;
+  text-align:center;
+  color:var(--muted);
+  text-decoration:none;
+  font-size:12px;
+}
+.nav a.active{
+  color:var(--accent);
+  font-weight:bold;
+}
 #modal{
   display:none;
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.8);
-  display:flex;
+  background:rgba(0,0,0,.7);
   align-items:center;
   justify-content:center;
   z-index:9999;
 }
 #modalBox{
   background:#0f172a;
-  padding:18px;
-  border-radius:16px;
+  padding:16px;
+  border-radius:14px;
   width:90%;
   max-width:400px;
 }
 #modalBox input{
   width:100%;
-  padding:14px;
-  border-radius:10px;
+  padding:10px;
+  border-radius:8px;
   border:none;
-  margin-bottom:12px;
-}
-
-@media(max-width:600px){
-  .products{grid-template-columns:1fr}
+  margin-bottom:10px;
 }
 </style>
 </head>
@@ -95,132 +113,179 @@ button{
 <body>
 
 <div class="wrapper">
+
   <div class="header">
     <h2>Barmods Store</h2>
     <div>Suntik All Sosmed</div>
   </div>
 
-  <!-- FOLLOWERS -->
   <div class="card">
-    <div class="section-title">Followers</div>
-    <div class="products" id="followers"></div>
+    Saldo kamu:<br>
+    <b id="saldo">Rp 0</b>
   </div>
 
-  <!-- VIEWS -->
   <div class="card">
-    <div class="section-title">Views</div>
-    <div class="products" id="views"></div>
+    <div class="acc-title">Followers</div>
+    <div class="acc-content" id="followers"></div>
   </div>
 
-  <!-- LIKES -->
   <div class="card">
-    <div class="section-title">Likes</div>
-    <div class="products" id="likes"></div>
+    <div class="acc-title">Views</div>
+    <div class="acc-content" id="views"></div>
   </div>
 
-  <!-- WHATSAPP -->
   <div class="card">
-    <div class="section-title">Member Saluran WhatsApp</div>
-    <div class="products" id="whatsapp"></div>
+    <div class="acc-title">Likes</div>
+    <div class="acc-content" id="likes"></div>
   </div>
+
+  <div class="card">
+    <div class="acc-title">Member Saluran WhatsApp</div>
+    <div class="acc-content" id="wa"></div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <a class="active" href="index.html">Store</a>
+  <a href="wallet.html">Wallet</a>
+  <a href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
 </div>
 
 <!-- MODAL -->
 <div id="modal">
   <div id="modalBox">
     <h3 id="modalTitle"></h3>
-    <input id="orderInput" placeholder="">
-    <button id="submitBtn">Buat Pesanan</button>
+    <input id="modalInput">
+    <button id="submitOrderBtn">Buat Pesanan</button>
   </div>
 </div>
 
-<!-- FIREBASE V8 (AMAN HP) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore,doc,getDoc,updateDoc,addDoc,collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-<script>
-/* FIREBASE CONFIG */
-firebase.initializeApp({
-  apiKey: "AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
-  authDomain: "barmods-allsosmed.firebaseapp.com",
-  projectId: "barmods-allsosmed"
-});
-const db = firebase.firestore();
-
-/* DATA PRODUK */
-const products = {
-  followers: [
-    {name:"100 Followers TikTok", price:5000, placeholder:"Username TikTok"},
-    {name:"200 Followers Instagram", price:11000, placeholder:"Username Instagram"}
-  ],
-  views: [
-    {name:"1000 Views TikTok", price:2000, placeholder:"Link Video TikTok"},
-    {name:"1000 Views Instagram", price:2500, placeholder:"Link Video Instagram"}
-  ],
-  likes: [
-    {name:"100 Likes TikTok", price:2000, placeholder:"Link Video TikTok"},
-    {name:"100 Likes Instagram", price:2500, placeholder:"Link Video Instagram"}
-  ],
-  whatsapp: [
-    {name:"100 Member WhatsApp", price:8000, placeholder:"Link Saluran WhatsApp"}
-  ]
+/* FIREBASE */
+const firebaseConfig={
+  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain:"barmods-allsosmed.firebaseapp.com",
+  projectId:"barmods-allsosmed",
+  storageBucket:"barmods-allsosmed.appspot.com",
+  messagingSenderId:"864045617186",
+  appId:"1:864045617186:web:de246e8f46321015327a7b"
 };
 
-let selectedProduct = null;
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-/* RENDER PRODUK */
-function render(section,id){
-  const el = document.getElementById(id);
-  products[section].forEach(p=>{
-    el.innerHTML += `
-      <div class="product">
-        <b>${p.name}</b>
-        <div class="price">Rp ${p.price.toLocaleString("id-ID")}</div>
-        <button onclick="openOrder('${section}','${p.name}',${p.price},'${p.placeholder}')">
-          Order
-        </button>
-      </div>
-    `;
+const saldoEl=document.getElementById("saldo");
+const modal=document.getElementById("modal");
+const modalTitle=document.getElementById("modalTitle");
+const modalInput=document.getElementById("modalInput");
+const submitBtn=document.getElementById("submitOrderBtn");
+
+let userData={},orderName="",orderPrice=0,orderType="";
+
+/* AUTH */
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.href="login.html";return;}
+  const snap=await getDoc(doc(db,"users",user.uid));
+  userData={id:user.uid,...snap.data()};
+  saldoEl.innerText="Rp "+userData.balance.toLocaleString("id-ID");
+});
+
+/* ACCORDION */
+document.querySelectorAll(".acc-title").forEach(t=>{
+  t.onclick=()=> {
+    const c=t.nextElementSibling;
+    c.style.display=c.style.display==="block"?"none":"block";
+  };
+});
+
+const rupiah=n=>"Rp "+n.toLocaleString("id-ID");
+
+/* PRODUK */
+const products=[];
+
+/* FOLLOWERS */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+  products.push(
+    {name:`${q} Followers TikTok`,price:5000*(i+1),type:"tt_follow",cat:"followers"},
+    {name:`${q} Followers Instagram`,price:5500*(i+1),type:"ig_follow",cat:"followers"}
+  );
+});
+
+/* VIEWS */
+[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000].forEach((q,i)=>{
+  products.push(
+    {name:`${q} Views TikTok`,price:2000*(i+1),type:"tt_view",cat:"views"},
+    {name:`${q} Views Instagram`,price:2500*(i+1),type:"ig_view",cat:"views"}
+  );
+});
+
+/* LIKES */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+  products.push(
+    {name:`${q} Likes TikTok`,price:2000*(i+1),type:"tt_like",cat:"likes"},
+    {name:`${q} Likes Instagram`,price:2500*(i+1),type:"ig_like",cat:"likes"}
+  );
+});
+
+/* WA */
+[100,200,300,400,500].forEach((q,i)=>{
+  products.push(
+    {name:`${q} Member WhatsApp`,price:8000*(i+1),type:"wa",cat:"wa"}
+  );
+});
+
+/* RENDER */
+products.forEach(p=>{
+  const el=document.createElement("div");
+  el.className="card";
+  el.innerHTML=`
+    <b>${p.name}</b>
+    <div class="price">${rupiah(p.price)}</div>
+    <button>Order</button>
+  `;
+  el.querySelector("button").onclick=()=>{
+    orderName=p.name;
+    orderPrice=p.price;
+    orderType=p.type;
+    modalTitle.innerText=p.name;
+    modalInput.placeholder=
+      p.type==="wa"?"Link Saluran WhatsApp":
+      p.type.includes("view")||p.type.includes("like")?"Link Video":"Username";
+    modalInput.value="";
+    modal.style.display="flex";
+  };
+  document.getElementById(p.cat).appendChild(el);
+});
+
+/* SUBMIT ORDER — FIXED */
+submitBtn.addEventListener("click",async()=>{
+  if(!modalInput.value)return alert("Form wajib diisi");
+  if(userData.balance<orderPrice)return alert("Saldo tidak cukup");
+
+  await updateDoc(doc(db,"users",userData.id),{
+    balance:userData.balance-orderPrice
   });
-}
-render("followers","followers");
-render("views","views");
-render("likes","likes");
-render("whatsapp","whatsapp");
 
-/* OPEN MODAL */
-function openOrder(section,name,price,placeholder){
-  selectedProduct = {section,name,price};
-  document.getElementById("modalTitle").innerText = name;
-  const input = document.getElementById("orderInput");
-  input.placeholder = placeholder;
-  input.value = "";
-  modal.style.display = "flex";
-}
-
-/* SUBMIT ORDER */
-document.getElementById("submitBtn").addEventListener("click",function(){
-  const val = orderInput.value.trim();
-  if(!val){
-    alert("Form wajib diisi");
-    return;
-  }
-
-  db.collection("orders").add({
-    product: selectedProduct.name,
-    category: selectedProduct.section,
-    input: val,
-    price: selectedProduct.price,
-    status: "pending",
-    createdAt: new Date()
-  }).then(()=>{
-    alert("Order berhasil, status PENDING");
-    modal.style.display = "none";
-  }).catch(err=>{
-    alert(err.message);
+  await addDoc(collection(db,"orders"),{
+    userId:userData.id,
+    product:orderName,
+    input:modalInput.value,
+    price:orderPrice,
+    status:"pending",
+    createdAt:new Date()
   });
+
+  alert("Order berhasil (PENDING)");
+  location.reload();
 });
 </script>
 
 </body>
-  </html>
+</html>
