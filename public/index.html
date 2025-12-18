@@ -7,22 +7,13 @@
 
 <style>
 :root{
-  --bg:#020617;
-  --card:#0f172a;
-  --accent:#38bdf8;
-  --green:#22c55e;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
+ --bg:#020617;--card:#0f172a;--accent:#38bdf8;
+ --green:#22c55e;--text:#e5e7eb;--muted:#94a3b8;
 }
 body{margin:0;background:var(--bg);color:var(--text);font-family:Arial}
 .wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:90px}
-.header{
-  background:linear-gradient(135deg,#2563eb,#38bdf8);
-  padding:18px;border-radius:16px;margin-bottom:16px
-}
-.info{
-  background:var(--card);padding:14px;border-radius:14px;margin-bottom:16px
-}
+.header{background:linear-gradient(135deg,#2563eb,#38bdf8);padding:18px;border-radius:16px;margin-bottom:16px}
+.info{background:var(--card);padding:14px;border-radius:14px;margin-bottom:16px}
 .accordion{background:var(--card);border-radius:14px;margin-bottom:12px}
 .acc-title{padding:14px;font-weight:bold;cursor:pointer}
 .acc-content{display:none;padding:12px}
@@ -30,41 +21,17 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:Arial}
 .card{background:#020617;padding:12px;border-radius:12px}
 .card h4{margin:0;font-size:14px}
 .price{margin:6px 0;font-weight:bold}
-button{
-  width:100%;padding:8px;border:none;border-radius:20px;
-  background:var(--green);font-weight:bold;cursor:pointer
-}
-
-/* NAV */
-.nav{
-  position:fixed;bottom:0;left:0;right:0;
-  background:#020617;
-  display:grid;grid-template-columns:repeat(4,1fr);
-  border-top:1px solid #0f172a
-}
-.nav a{
-  padding:12px 0;text-align:center;
-  color:var(--muted);text-decoration:none;font-size:12px
-}
+button{width:100%;padding:10px;border:none;border-radius:20px;background:var(--green);font-weight:bold}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#020617;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #0f172a}
+.nav a{padding:12px 0;text-align:center;color:var(--muted);text-decoration:none;font-size:12px}
 .nav a.active{color:var(--accent);font-weight:bold}
 
 /* MODAL */
-#modal{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,.7);
-  align-items:center;justify-content:center
-}
-#modalBox{
-  background:#0f172a;padding:16px;border-radius:14px;
-  width:90%;max-width:400px
-}
-#modalBox input{
-  width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px
-}
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
+#modalBox{background:#0f172a;padding:16px;border-radius:14px;width:90%;max-width:400px}
+#modalBox input{width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px}
 
-@media(max-width:600px){
-  .row{grid-template-columns:1fr}
-}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
 </style>
 </head>
 
@@ -82,25 +49,21 @@ button{
     <b id="saldo">Rp 0</b>
   </div>
 
-  <!-- FOLLOWERS -->
   <div class="accordion">
     <div class="acc-title" onclick="toggle(this)">Followers</div>
     <div class="acc-content" id="followers"></div>
   </div>
 
-  <!-- VIEWS -->
   <div class="accordion">
     <div class="acc-title" onclick="toggle(this)">Views</div>
     <div class="acc-content" id="views"></div>
   </div>
 
-  <!-- LIKES -->
   <div class="accordion">
     <div class="acc-title" onclick="toggle(this)">Likes</div>
     <div class="acc-content" id="likes"></div>
   </div>
 
-  <!-- WHATSAPP -->
   <div class="accordion">
     <div class="acc-title" onclick="toggle(this)">Member Saluran WhatsApp</div>
     <div class="acc-content" id="wa"></div>
@@ -108,7 +71,6 @@ button{
 
 </div>
 
-<!-- NAV -->
 <div class="nav">
   <a class="active" href="index.html">Store</a>
   <a href="wallet.html">Wallet</a>
@@ -128,7 +90,7 @@ button{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore,doc,getDoc,updateDoc,addDoc,collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore,doc,getDoc,updateDoc,addDoc,collection,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig={
  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
@@ -145,100 +107,59 @@ const db=getFirestore(app);
 
 let userData={},orderName="",orderPrice=0,orderType="";
 
+/* AUTH */
 onAuthStateChanged(auth,async user=>{
  if(!user){location.href="login.html";return;}
  const snap=await getDoc(doc(db,"users",user.uid));
  userData={id:user.uid,...snap.data()};
- document.getElementById("saldo").innerText=
-  "Rp "+userData.balance.toLocaleString("id-ID");
+ saldo.innerText="Rp "+userData.balance.toLocaleString("id-ID");
 });
 
+/* ACCORDION */
 window.toggle=function(el){
  const c=el.nextElementSibling;
  c.style.display=c.style.display==="block"?"none":"block";
 };
 
-const qtyFollow=[100,200,300,400,500,600,700,800,900,1000];
-const qtyView=[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000];
-const rupiah=n=>"Rp "+n.toLocaleString("id-ID");
+/* LOAD PRODUK */
+const snap=await getDocs(collection(db,"products"));
+snap.forEach(p=>{
+ const d=p.data();
+ if(!d.active) return;
 
-/* FOLLOWERS */
-qtyFollow.forEach((q,i)=>{
- followers.innerHTML+=`
- <div class="row">
-  <div class="card">
-   <h4>${q} Followers TikTok</h4>
-   <div class="price">${rupiah(5000*(i+1))}</div>
-   <button onclick="order('${q} Followers TikTok',${5000*(i+1)},'tt_follow')">Order</button>
-  </div>
-  <div class="card">
-   <h4>${q} Followers Instagram</h4>
-   <div class="price">${rupiah(5500*(i+1))}</div>
-   <button onclick="order('${q} Followers Instagram',${5500*(i+1)},'ig_follow')">Order</button>
-  </div>
+ const html=`
+ <div class="card">
+  <h4>${d.name}</h4>
+  <div class="price">Rp ${d.price.toLocaleString("id-ID")}</div>
+  <button onclick="order('${d.name}',${d.price},'${d.type}')">Order</button>
  </div>`;
+
+ if(d.category==="followers") followers.innerHTML+=html;
+ if(d.category==="views") views.innerHTML+=html;
+ if(d.category==="likes") likes.innerHTML+=html;
+ if(d.category==="wa") wa.innerHTML+=html;
 });
 
-/* VIEWS */
-qtyView.forEach((q,i)=>{
- views.innerHTML+=`
- <div class="row">
-  <div class="card">
-   <h4>${q} Views TikTok</h4>
-   <div class="price">${rupiah(2000*(i+1))}</div>
-   <button onclick="order('${q} Views TikTok',${2000*(i+1)},'tt_view')">Order</button>
-  </div>
-  <div class="card">
-   <h4>${q} Views Instagram</h4>
-   <div class="price">${rupiah(2500*(i+1))}</div>
-   <button onclick="order('${q} Views Instagram',${2500*(i+1)},'ig_view')">Order</button>
-  </div>
- </div>`;
-});
-
-/* LIKES */
-qtyFollow.forEach((q,i)=>{
- likes.innerHTML+=`
- <div class="row">
-  <div class="card">
-   <h4>${q} Likes TikTok</h4>
-   <div class="price">${rupiah(2000*(i+1))}</div>
-   <button onclick="order('${q} Likes TikTok',${2000*(i+1)},'tt_like')">Order</button>
-  </div>
-  <div class="card">
-   <h4>${q} Likes Instagram</h4>
-   <div class="price">${rupiah(2500*(i+1))}</div>
-   <button onclick="order('${q} Likes Instagram',${2500*(i+1)},'ig_like')">Order</button>
-  </div>
- </div>`;
-});
-
-/* WA */
-qtyFollow.forEach((q,i)=>{
- wa.innerHTML+=`
- <div class="card" style="margin-bottom:10px">
-  <h4>${q} Member WhatsApp</h4>
-  <div class="price">${rupiah(8000*(i+1))}</div>
-  <button onclick="order('${q} Member WhatsApp',${8000*(i+1)},'wa')">Order</button>
- </div>`;
-});
-
+/* OPEN MODAL */
 window.order=function(name,price,type){
  orderName=name;orderPrice=price;orderType=type;
- const i=document.getElementById("modalInput");
- if(type==="tt_follow") i.placeholder="Username TikTok";
- if(type==="tt_like"||type==="tt_view") i.placeholder="Link Video TikTok";
- if(type==="ig_follow") i.placeholder="Username Instagram";
- if(type==="ig_like"||type==="ig_view") i.placeholder="Link Video Instagram";
- if(type==="wa") i.placeholder="Link Saluran WhatsApp";
- document.getElementById("modalTitle").innerText=name;
+
+ if(type==="tt_follow") modalInput.placeholder="Username TikTok";
+ if(type==="tt_like"||type==="tt_view") modalInput.placeholder="Link Video TikTok";
+ if(type==="ig_follow") modalInput.placeholder="Username Instagram";
+ if(type==="ig_like"||type==="ig_view") modalInput.placeholder="Link Video Instagram";
+ if(type==="wa") modalInput.placeholder="Link Saluran WhatsApp";
+
+ modalTitle.innerText=name;
+ modalInput.value="";
  modal.style.display="flex";
 };
 
-window.submitOrder=async function(){
+/* SUBMIT ORDER (FIXED) */
+window.submitOrder = async function(){
  const val=modalInput.value;
- if(!val) return alert("Form wajib diisi");
- if(userData.balance<orderPrice) return alert("Saldo tidak cukup");
+ if(!val){alert("Form wajib diisi");return;}
+ if(userData.balance<orderPrice){alert("Saldo tidak cukup");return;}
 
  await updateDoc(doc(db,"users",userData.id),{
   balance:userData.balance-orderPrice
@@ -254,6 +175,7 @@ window.submitOrder=async function(){
  });
 
  alert("Order berhasil (PENDING)");
+ modal.style.display="none";
  location.reload();
 };
 </script>
