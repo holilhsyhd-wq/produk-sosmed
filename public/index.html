@@ -6,31 +6,72 @@
 <title>Barmods Store</title>
 
 <style>
-:root{
- --bg:#020617;--card:#0f172a;--accent:#38bdf8;
- --green:#22c55e;--text:#e5e7eb;--muted:#94a3b8;
+body{
+  margin:0;
+  font-family:Arial;
+  background:#020617;
+  color:#e5e7eb;
 }
-body{margin:0;background:var(--bg);color:var(--text);font-family:Arial}
 .wrapper{max-width:900px;margin:auto;padding:16px;padding-bottom:90px}
-.header{background:linear-gradient(135deg,#2563eb,#38bdf8);padding:18px;border-radius:16px;margin-bottom:16px}
-.info{background:var(--card);padding:14px;border-radius:14px;margin-bottom:16px}
-.accordion{background:var(--card);border-radius:14px;margin-bottom:12px}
-.acc-title{padding:14px;font-weight:bold;cursor:pointer}
-.acc-content{display:none;padding:12px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.card{background:#020617;padding:12px;border-radius:12px}
-.card h4{margin:0;font-size:14px}
+.header{
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  padding:18px;border-radius:16px;margin-bottom:16px
+}
+.card{
+  background:#0f172a;
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:12px
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:#22c55e;
+  font-weight:bold;
+}
 .price{margin:6px 0;font-weight:bold}
-button{width:100%;padding:10px;border:none;border-radius:20px;background:var(--green);font-weight:bold}
-.nav{position:fixed;bottom:0;left:0;right:0;background:#020617;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #0f172a}
-.nav a{padding:12px 0;text-align:center;color:var(--muted);text-decoration:none;font-size:12px}
-.nav a.active{color:var(--accent);font-weight:bold}
-
-/* MODAL */
-#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
-#modalBox{background:#0f172a;padding:16px;border-radius:14px;width:90%;max-width:400px}
-#modalBox input{width:100%;padding:10px;border-radius:8px;border:none;margin-bottom:10px}
-
+.acc-title{cursor:pointer;font-weight:bold}
+.acc-content{display:none;margin-top:10px}
+#modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  align-items:center;
+  justify-content:center
+}
+#modalBox{
+  background:#0f172a;
+  padding:16px;
+  border-radius:14px;
+  width:90%;
+  max-width:400px
+}
+#modalBox input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin-bottom:10px
+}
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#020617;
+  display:grid;
+  grid-template-columns:repeat(4,1fr)
+}
+.nav a{
+  padding:12px 0;
+  text-align:center;
+  color:#94a3b8;
+  text-decoration:none;
+  font-size:12px
+}
+.nav a.active{color:#38bdf8;font-weight:bold}
 @media(max-width:600px){.row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -44,27 +85,27 @@ button{width:100%;padding:10px;border:none;border-radius:20px;background:var(--g
     <div>Suntik All Sosmed</div>
   </div>
 
-  <div class="info">
+  <div class="card">
     Saldo kamu:<br>
     <b id="saldo">Rp 0</b>
   </div>
 
-  <div class="accordion">
+  <div class="card">
     <div class="acc-title" onclick="toggle(this)">Followers</div>
     <div class="acc-content" id="followers"></div>
   </div>
 
-  <div class="accordion">
+  <div class="card">
     <div class="acc-title" onclick="toggle(this)">Views</div>
     <div class="acc-content" id="views"></div>
   </div>
 
-  <div class="accordion">
+  <div class="card">
     <div class="acc-title" onclick="toggle(this)">Likes</div>
     <div class="acc-content" id="likes"></div>
   </div>
 
-  <div class="accordion">
+  <div class="card">
     <div class="acc-title" onclick="toggle(this)">Member Saluran WhatsApp</div>
     <div class="acc-content" id="wa"></div>
   </div>
@@ -78,7 +119,7 @@ button{width:100%;padding:10px;border:none;border-radius:20px;background:var(--g
   <a href="profile.html">Profile</a>
 </div>
 
-<!-- MODAL ORDER -->
+<!-- MODAL -->
 <div id="modal">
   <div id="modalBox">
     <h3 id="modalTitle"></h3>
@@ -90,15 +131,19 @@ button{width:100%;padding:10px;border:none;border-radius:20px;background:var(--g
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore,doc,getDoc,updateDoc,addDoc,collection,getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,doc,getDoc,updateDoc,
+  addDoc,collection,getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+/* FIREBASE CONFIG */
 const firebaseConfig={
- apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
- authDomain:"barmods-allsosmed.firebaseapp.com",
- projectId:"barmods-allsosmed",
- storageBucket:"barmods-allsosmed.appspot.com",
- messagingSenderId:"864045617186",
- appId:"1:864045617186:web:de246e8f46321015327a7b"
+  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain:"barmods-allsosmed.firebaseapp.com",
+  projectId:"barmods-allsosmed",
+  storageBucket:"barmods-allsosmed.appspot.com",
+  messagingSenderId:"864045617186",
+  appId:"1:864045617186:web:de246e8f46321015327a7b"
 };
 
 const app=initializeApp(firebaseConfig);
@@ -121,44 +166,88 @@ window.toggle=function(el){
  c.style.display=c.style.display==="block"?"none":"block";
 };
 
-/* LOAD PRODUK */
-const snap=await getDocs(collection(db,"products"));
-snap.forEach(p=>{
- const d=p.data();
- if(!d.active) return;
+const rupiah=n=>"Rp "+n.toLocaleString("id-ID");
 
- const html=`
- <div class="card">
-  <h4>${d.name}</h4>
-  <div class="price">Rp ${d.price.toLocaleString("id-ID")}</div>
-  <button onclick="order('${d.name}',${d.price},'${d.type}')">Order</button>
- </div>`;
+/* DATA PRODUK */
+const products=[];
 
- if(d.category==="followers") followers.innerHTML+=html;
- if(d.category==="views") views.innerHTML+=html;
- if(d.category==="likes") likes.innerHTML+=html;
- if(d.category==="wa") wa.innerHTML+=html;
+/* FOLLOWERS */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Followers TikTok`,price:5000*(i+1),type:"tt_follow",category:"followers"},
+  {name:`${q} Followers Instagram`,price:5500*(i+1),type:"ig_follow",category:"followers"}
+ );
 });
 
-/* OPEN MODAL */
+/* VIEWS */
+[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Views TikTok`,price:2000*(i+1),type:"tt_view",category:"views"},
+  {name:`${q} Views Instagram`,price:2500*(i+1),type:"ig_view",category:"views"}
+ );
+});
+
+/* LIKES */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Likes TikTok`,price:2000*(i+1),type:"tt_like",category:"likes"},
+  {name:`${q} Likes Instagram`,price:2500*(i+1),type:"ig_like",category:"likes"}
+ );
+});
+
+/* WHATSAPP */
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+ products.push(
+  {name:`${q} Member WhatsApp`,price:8000*(i+1),type:"wa",category:"wa"}
+ );
+});
+
+/* AUTO SAVE KE FIREBASE (SEKALI) */
+async function autoSaveProducts(){
+ const snap=await getDocs(collection(db,"products"));
+ if(!snap.empty) return;
+
+ for(const p of products){
+  await addDoc(collection(db,"products"),{
+    ...p,
+    active:true
+  });
+ }
+ console.log("Produk otomatis tersimpan");
+}
+autoSaveProducts();
+
+/* TAMPILKAN PRODUK */
+products.forEach(p=>{
+ const html=`
+ <div class="row">
+  <div class="card">
+   <b>${p.name}</b>
+   <div class="price">${rupiah(p.price)}</div>
+   <button onclick="order('${p.name}',${p.price},'${p.type}')">Order</button>
+  </div>
+ </div>`;
+ if(p.category==="followers") followers.innerHTML+=html;
+ if(p.category==="views") views.innerHTML+=html;
+ if(p.category==="likes") likes.innerHTML+=html;
+ if(p.category==="wa") wa.innerHTML+=html;
+});
+
+/* MODAL */
 window.order=function(name,price,type){
  orderName=name;orderPrice=price;orderType=type;
-
- if(type==="tt_follow") modalInput.placeholder="Username TikTok";
- if(type==="tt_like"||type==="tt_view") modalInput.placeholder="Link Video TikTok";
- if(type==="ig_follow") modalInput.placeholder="Username Instagram";
- if(type==="ig_like"||type==="ig_view") modalInput.placeholder="Link Video Instagram";
- if(type==="wa") modalInput.placeholder="Link Saluran WhatsApp";
-
  modalTitle.innerText=name;
+ modalInput.placeholder=
+  type==="wa"?"Link Saluran WhatsApp":
+  type.includes("view")||type.includes("like")?"Link Video":
+  "Username";
  modalInput.value="";
  modal.style.display="flex";
 };
 
-/* SUBMIT ORDER (FIXED) */
-window.submitOrder = async function(){
- const val=modalInput.value;
- if(!val){alert("Form wajib diisi");return;}
+/* SUBMIT ORDER */
+window.submitOrder=async function(){
+ if(!modalInput.value){alert("Wajib diisi");return;}
  if(userData.balance<orderPrice){alert("Saldo tidak cukup");return;}
 
  await updateDoc(doc(db,"users",userData.id),{
@@ -168,7 +257,7 @@ window.submitOrder = async function(){
  await addDoc(collection(db,"orders"),{
   userId:userData.id,
   product:orderName,
-  input:val,
+  input:modalInput.value,
   price:orderPrice,
   status:"pending",
   createdAt:new Date()
