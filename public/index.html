@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barmods Store</title>
+<title>Orders - Barmods Store</title>
 
 <style>
 :root{
   --bg:#020617;
   --card:#0f172a;
   --accent:#38bdf8;
-  --green:#22c55e;
   --text:#e5e7eb;
   --muted:#94a3b8;
 }
@@ -39,32 +38,19 @@ body{
   border-radius:14px;
   margin-bottom:12px;
 }
-.row{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  margin-top:6px;
 }
-.price{
-  margin:6px 0;
-  font-weight:bold;
-}
-button{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:20px;
-  background:var(--green);
-  font-weight:bold;
-  cursor:pointer;
-}
-.acc-title{
-  font-weight:bold;
-  cursor:pointer;
-}
-.acc-content{
-  display:none;
-  margin-top:10px;
-}
+.pending{background:#f59e0b}
+.process{background:#3b82f6}
+.success{background:#22c55e}
+.error{background:#ef4444}
+
+/* NAV */
 .nav{
   position:fixed;
   bottom:0;left:0;right:0;
@@ -84,88 +70,33 @@ button{
   color:var(--accent);
   font-weight:bold;
 }
-#modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-#modalBox{
-  background:#0f172a;
-  padding:16px;
-  border-radius:14px;
-  width:90%;
-  max-width:400px;
-}
-#modalBox input{
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  margin-bottom:10px;
-}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-
   <div class="header">
-    <h2>Barmods Store</h2>
-    <div>Suntik All Sosmed</div>
+    <h2>Riwayat Order</h2>
+    <div>Pesanan kamu</div>
   </div>
 
-  <div class="card">
-    Saldo kamu:<br>
-    <b id="saldo">Rp 0</b>
-  </div>
-
-  <div class="card">
-    <div class="acc-title">Followers</div>
-    <div class="acc-content" id="followers"></div>
-  </div>
-
-  <div class="card">
-    <div class="acc-title">Views</div>
-    <div class="acc-content" id="views"></div>
-  </div>
-
-  <div class="card">
-    <div class="acc-title">Likes</div>
-    <div class="acc-content" id="likes"></div>
-  </div>
-
-  <div class="card">
-    <div class="acc-title">Member Saluran WhatsApp</div>
-    <div class="acc-content" id="wa"></div>
-  </div>
-
+  <div id="list"></div>
 </div>
 
 <div class="nav">
-  <a class="active" href="index.html">Store</a>
+  <a href="index.html">Store</a>
   <a href="wallet.html">Wallet</a>
-  <a href="orders.html">Orders</a>
+  <a class="active" href="orders.html">Orders</a>
   <a href="profile.html">Profile</a>
-</div>
-
-<!-- MODAL -->
-<div id="modal">
-  <div id="modalBox">
-    <h3 id="modalTitle"></h3>
-    <input id="modalInput">
-    <button id="submitOrderBtn">Buat Pesanan</button>
-  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore,doc,getDoc,updateDoc,addDoc,collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore,collection,getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* FIREBASE */
 const firebaseConfig={
@@ -181,111 +112,57 @@ const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
-const saldoEl=document.getElementById("saldo");
-const modal=document.getElementById("modal");
-const modalTitle=document.getElementById("modalTitle");
-const modalInput=document.getElementById("modalInput");
-const submitBtn=document.getElementById("submitOrderBtn");
-
-let userData={},orderName="",orderPrice=0,orderType="";
+const list=document.getElementById("list");
 
 /* AUTH */
 onAuthStateChanged(auth,async user=>{
-  if(!user){location.href="login.html";return;}
-  const snap=await getDoc(doc(db,"users",user.uid));
-  userData={id:user.uid,...snap.data()};
-  saldoEl.innerText="Rp "+userData.balance.toLocaleString("id-ID");
+  if(!user){
+    location.href="login.html";
+    return;
+  }
+
+  loadOrders(user.uid);
 });
 
-/* ACCORDION */
-document.querySelectorAll(".acc-title").forEach(t=>{
-  t.onclick=()=> {
-    const c=t.nextElementSibling;
-    c.style.display=c.style.display==="block"?"none":"block";
-  };
-});
+/* LOAD ORDERS (AMAN TANPA WHERE) */
+async function loadOrders(uid){
+  list.innerHTML="";
 
-const rupiah=n=>"Rp "+n.toLocaleString("id-ID");
+  const snap = await getDocs(collection(db,"orders"));
 
-/* PRODUK */
-const products=[];
+  let found=false;
 
-/* FOLLOWERS */
-[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
-  products.push(
-    {name:`${q} Followers TikTok`,price:5000*(i+1),type:"tt_follow",cat:"followers"},
-    {name:`${q} Followers Instagram`,price:5500*(i+1),type:"ig_follow",cat:"followers"}
-  );
-});
+  snap.forEach(doc=>{
+    const o = doc.data();
 
-/* VIEWS */
-[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000].forEach((q,i)=>{
-  products.push(
-    {name:`${q} Views TikTok`,price:2000*(i+1),type:"tt_view",cat:"views"},
-    {name:`${q} Views Instagram`,price:2500*(i+1),type:"ig_view",cat:"views"}
-  );
-});
+    // FILTER MANUAL (INI KUNCI FIX)
+    if(o.userId !== uid) return;
 
-/* LIKES */
-[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
-  products.push(
-    {name:`${q} Likes TikTok`,price:2000*(i+1),type:"tt_like",cat:"likes"},
-    {name:`${q} Likes Instagram`,price:2500*(i+1),type:"ig_like",cat:"likes"}
-  );
-});
+    found=true;
 
-/* WA */
-[100,200,300,400,500].forEach((q,i)=>{
-  products.push(
-    {name:`${q} Member WhatsApp`,price:8000*(i+1),type:"wa",cat:"wa"}
-  );
-});
+    const status=o.status || "pending";
 
-/* RENDER */
-products.forEach(p=>{
-  const el=document.createElement("div");
-  el.className="card";
-  el.innerHTML=`
-    <b>${p.name}</b>
-    <div class="price">${rupiah(p.price)}</div>
-    <button>Order</button>
-  `;
-  el.querySelector("button").onclick=()=>{
-    orderName=p.name;
-    orderPrice=p.price;
-    orderType=p.type;
-    modalTitle.innerText=p.name;
-    modalInput.placeholder=
-      p.type==="wa"?"Link Saluran WhatsApp":
-      p.type.includes("view")||p.type.includes("like")?"Link Video":"Username";
-    modalInput.value="";
-    modal.style.display="flex";
-  };
-  document.getElementById(p.cat).appendChild(el);
-});
-
-/* SUBMIT ORDER — FIXED */
-submitBtn.addEventListener("click",async()=>{
-  if(!modalInput.value)return alert("Form wajib diisi");
-  if(userData.balance<orderPrice)return alert("Saldo tidak cukup");
-
-  await updateDoc(doc(db,"users",userData.id),{
-    balance:userData.balance-orderPrice
+    list.innerHTML += `
+      <div class="card">
+        <b>${o.product || "-"}</b>
+        <div>Input: ${o.input || "-"}</div>
+        <div>Harga: Rp ${Number(o.price||0).toLocaleString("id-ID")}</div>
+        <span class="badge ${status}">
+          ${status.toUpperCase()}
+        </span>
+      </div>
+    `;
   });
 
-  await addDoc(collection(db,"orders"),{
-    userId:userData.id,
-    product:orderName,
-    input:modalInput.value,
-    price:orderPrice,
-    status:"pending",
-    createdAt:new Date()
-  });
-
-  alert("Order berhasil (PENDING)");
-  location.reload();
-});
+  if(!found){
+    list.innerHTML = `
+      <div class="card">
+        <center>Belum ada pesanan</center>
+      </div>
+    `;
+  }
+}
 </script>
 
 </body>
-</html>
+</html>4
