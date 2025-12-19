@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orders - Barmods Store</title>
+<title>Barmods Store</title>
 
 <style>
 :root{
   --bg:#020617;
   --card:#0f172a;
   --accent:#38bdf8;
+  --green:#22c55e;
   --text:#e5e7eb;
   --muted:#94a3b8;
 }
@@ -38,17 +39,24 @@ body{
   border-radius:14px;
   margin-bottom:12px;
 }
-.badge{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  font-size:12px;
-  margin-top:6px;
+.acc-title{
+  font-weight:bold;
+  cursor:pointer;
 }
-.pending{background:#f59e0b}
-.process{background:#3b82f6}
-.success{background:#22c55e}
-.error{background:#ef4444}
+.acc-content{
+  display:none;
+  margin-top:10px;
+}
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:20px;
+  background:var(--green);
+  font-weight:bold;
+  cursor:pointer;
+}
+.price{margin:6px 0}
 
 /* NAV */
 .nav{
@@ -70,32 +78,91 @@ body{
   color:var(--accent);
   font-weight:bold;
 }
+
+/* MODAL */
+#modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+#modalBox{
+  background:#0f172a;
+  padding:16px;
+  border-radius:14px;
+  width:90%;
+  max-width:400px;
+}
+#modalBox input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  margin-bottom:10px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
+
   <div class="header">
-    <h2>Riwayat Order</h2>
-    <div>Pesanan kamu</div>
+    <h2>Barmods Store</h2>
+    <div>Suntik All Sosmed</div>
   </div>
 
-  <div id="list"></div>
+  <div class="card">
+    Saldo kamu:<br>
+    <b id="saldo">Rp 0</b>
+  </div>
+
+  <div class="card">
+    <div class="acc-title" onclick="toggle(this)">Followers</div>
+    <div class="acc-content" id="followers"></div>
+  </div>
+
+  <div class="card">
+    <div class="acc-title" onclick="toggle(this)">Views</div>
+    <div class="acc-content" id="views"></div>
+  </div>
+
+  <div class="card">
+    <div class="acc-title" onclick="toggle(this)">Likes</div>
+    <div class="acc-content" id="likes"></div>
+  </div>
+
+  <div class="card">
+    <div class="acc-title" onclick="toggle(this)">Member Saluran WhatsApp</div>
+    <div class="acc-content" id="wa"></div>
+  </div>
+
 </div>
 
 <div class="nav">
-  <a href="index.html">Store</a>
+  <a class="active" href="index.html">Store</a>
   <a href="wallet.html">Wallet</a>
-  <a class="active" href="orders.html">Orders</a>
+  <a href="orders.html">Orders</a>
   <a href="profile.html">Profile</a>
+</div>
+
+<!-- MODAL ORDER -->
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <input id="modalInput">
+    <button onclick="submitOrder()">Buat Pesanan</button>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore,collection,getDocs
+  getFirestore,doc,getDoc,updateDoc,addDoc,collection
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* FIREBASE */
@@ -107,62 +174,85 @@ const firebaseConfig={
   messagingSenderId:"864045617186",
   appId:"1:864045617186:web:de246e8f46321015327a7b"
 };
-
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
-const list=document.getElementById("list");
+let userData={},orderName="",orderPrice=0,orderType="";
 
 /* AUTH */
 onAuthStateChanged(auth,async user=>{
-  if(!user){
-    location.href="login.html";
-    return;
-  }
-
-  loadOrders(user.uid);
+  if(!user){location.href="login.html";return;}
+  const snap=await getDoc(doc(db,"users",user.uid));
+  userData={id:user.uid,...snap.data()};
+  saldo.innerText="Rp "+userData.balance.toLocaleString("id-ID");
 });
 
-/* LOAD ORDERS (AMAN TANPA WHERE) */
-async function loadOrders(uid){
-  list.innerHTML="";
+/* ACCORDION */
+window.toggle = el=>{
+  const c=el.nextElementSibling;
+  c.style.display=c.style.display==="block"?"none":"block";
+};
 
-  const snap = await getDocs(collection(db,"orders"));
+/* PRODUK LANGSUNG MUNCUL */
+const products=[];
+[100,200,300,400,500,600,700,800,900,1000].forEach((q,i)=>{
+  products.push(
+    {name:`${q} Followers TikTok`,price:5000*(i+1),type:"tt_follow",cat:"followers"},
+    {name:`${q} Followers Instagram`,price:5500*(i+1),type:"ig_follow",cat:"followers"},
+    {name:`${q} Likes TikTok`,price:2000*(i+1),type:"tt_like",cat:"likes"},
+    {name:`${q} Likes Instagram`,price:2500*(i+1),type:"ig_like",cat:"likes"},
+    {name:`${q} Member WhatsApp`,price:8000*(i+1),type:"wa",cat:"wa"}
+  );
+});
+[1000,2000,3000,4000,5000,6000,7000,8000,9000,10000].forEach((q,i)=>{
+  products.push(
+    {name:`${q} Views TikTok`,price:2000*(i+1),type:"tt_view",cat:"views"},
+    {name:`${q} Views Instagram`,price:2500*(i+1),type:"ig_view",cat:"views"}
+  );
+});
 
-  let found=false;
+const map={followers,views,likes,wa};
+products.forEach(p=>{
+  map[p.cat].innerHTML+=`
+    <div class="card">
+      <b>${p.name}</b>
+      <div class="price">Rp ${p.price.toLocaleString("id-ID")}</div>
+      <button onclick="order('${p.name}',${p.price},'${p.type}')">Order</button>
+    </div>`;
+});
 
-  snap.forEach(doc=>{
-    const o = doc.data();
+/* ORDER */
+window.order=(n,p,t)=>{
+  orderName=n;orderPrice=p;orderType=t;
+  modalTitle.innerText=n;
+  modalInput.placeholder =
+    t==="wa"?"Link Saluran WhatsApp":
+    t.includes("view")||t.includes("like")?"Link Video":"Username";
+  modal.style.display="flex";
+};
 
-    // FILTER MANUAL (INI KUNCI FIX)
-    if(o.userId !== uid) return;
+window.submitOrder=async ()=>{
+  if(!modalInput.value) return alert("Form wajib diisi");
+  if(userData.balance<orderPrice) return alert("Saldo tidak cukup");
 
-    found=true;
-
-    const status=o.status || "pending";
-
-    list.innerHTML += `
-      <div class="card">
-        <b>${o.product || "-"}</b>
-        <div>Input: ${o.input || "-"}</div>
-        <div>Harga: Rp ${Number(o.price||0).toLocaleString("id-ID")}</div>
-        <span class="badge ${status}">
-          ${status.toUpperCase()}
-        </span>
-      </div>
-    `;
+  await updateDoc(doc(db,"users",userData.id),{
+    balance:userData.balance-orderPrice
   });
 
-  if(!found){
-    list.innerHTML = `
-      <div class="card">
-        <center>Belum ada pesanan</center>
-      </div>
-    `;
-  }
-}
+  await addDoc(collection(db,"orders"),{
+    userId:userData.id,
+    product:orderName,
+    input:modalInput.value,
+    price:orderPrice,
+    status:"pending",
+    createdAt:new Date()
+  });
+
+  alert("Order berhasil (PENDING)");
+  location.reload();
+};
 </script>
 
 </body>
-</html>4
+</html>
