@@ -1,441 +1,163 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Barmods Store - Orders</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root {
-      --bg: #020617;
-      --card: #020617;
-      --card-soft: #0b1220;
-      --primary: #2563eb;
-      --accent: #22c55e;
-      --danger: #ef4444;
-      --warning: #facc15;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --radius-xl: 18px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riwayat Order - Barmods Store</title>
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<style>
+:root{
+  --bg:#020617;
+  --card:#0f172a;
+  --accent:#38bdf8;
+  --green:#22c55e;
+  --yellow:#facc15;
+  --red:#ef4444;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+.wrapper{
+  max-width:900px;
+  margin:auto;
+  padding:16px;
+  padding-bottom:90px;
+}
+.header{
+  background:linear-gradient(135deg,#2563eb,#38bdf8);
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:16px;
+}
+.card{
+  background:var(--card);
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:12px;
+}
+.status{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:12px;
+  font-size:12px;
+  font-weight:bold;
+}
+.pending{background:var(--yellow);color:#000}
+.success{background:var(--green);color:#000}
+.error{background:var(--red);color:#fff}
 
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at top left, #1d4ed8 0, transparent 55%),
-        radial-gradient(circle at bottom right, #0f766e 0, transparent 55%),
-        #020617;
-      color: var(--text);
-      padding-bottom: 80px;
-    }
-
-    .page {
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 16px 16px 90px;
-    }
-
-    .page-title {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 16px;
-    }
-
-    .order-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .order-card {
-      background: radial-gradient(circle at top left, rgba(15,23,42,0.96), rgba(15,23,42,0.98));
-      border-radius: var(--radius-xl);
-      padding: 14px 14px 12px;
-      border: 1px solid rgba(30,64,175,0.7);
-      box-shadow: 0 16px 40px rgba(15,23,42,0.85);
-    }
-
-    .order-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .badge-status {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .badge-pending {
-      background: rgba(250,204,21,0.15);
-      color: #facc15;
-    }
-
-    .badge-success {
-      background: rgba(34,197,94,0.15);
-      color: #22c55e;
-    }
-
-    .badge-process {
-      background: rgba(59,130,246,0.15);
-      color: #60a5fa;
-    }
-
-    .badge-failed {
-      background: rgba(239,68,68,0.15);
-      color: #f97373;
-    }
-
-    .order-row {
-      font-size: 12px;
-      margin-bottom: 2px;
-      color: var(--muted);
-    }
-
-    .order-row span.label {
-      color: rgba(226,232,240,0.85);
-    }
-
-    .order-row strong {
-      color: #e5e7eb;
-    }
-
-    .order-footer {
-      margin-top: 10px;
-      display: flex;
-      justify-content: flex-start;
-    }
-
-    .btn-received {
-      border: none;
-      padding: 9px 16px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: #e5e7eb;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 12px 30px rgba(37,99,235,0.5);
-    }
-
-    .btn-received:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .info-text {
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-      margin-top: 18px;
-    }
-
-    .bottom-nav {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 8px 14px 14px;
-      background: radial-gradient(circle at top, rgba(15,23,42,0.98), rgba(2,6,23,0.98));
-      border-top: 1px solid rgba(31,41,55,0.95);
-      z-index: 30;
-    }
-
-    .bottom-nav-inner {
-      max-width: 520px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      background: rgba(15,23,42,0.96);
-      border-radius: 999px;
-      padding: 6px;
-      box-shadow: 0 -8px 25px rgba(15,23,42,0.9);
-      border: 1px solid rgba(31,41,55,0.9);
-    }
-
-    .nav-item {
-      text-align: center;
-      padding: 6px 4px;
-      border-radius: 999px;
-      font-size: 10px;
-      color: var(--muted);
-      text-decoration: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-
-    .nav-item span.icon {
-      font-size: 16px;
-    }
-
-    .nav-item.active {
-      background: radial-gradient(circle at top, #1d4ed8, #1e293b);
-      color: #e5e7eb;
-      box-shadow: 0 0 0 1px rgba(96,165,250,0.7);
-    }
-
-    .nav-item.active span.icon {
-      font-size: 17px;
-    }
-
-    .toast {
-      position: fixed;
-      left: 50%;
-      bottom: 80px;
-      transform: translateX(-50%);
-      padding: 9px 14px;
-      border-radius: 999px;
-      font-size: 12px;
-      background: rgba(15,23,42,0.96);
-      color: #e5e7eb;
-      border: 1px solid rgba(148,163,184,0.7);
-      box-shadow: 0 16px 40px rgba(15,23,42,0.95);
-      z-index: 1000;
-      display: none;
-    }
-
-    .toast.show {
-      display: block;
-      animation: fadeInOut 2.4s ease forwards;
-    }
-
-    @keyframes fadeInOut {
-      0% { opacity: 0; transform: translate(-50%, 10px); }
-      10% { opacity: 1; transform: translate(-50%, 0); }
-      80% { opacity: 1; transform: translate(-50%, 0); }
-      100% { opacity: 0; transform: translate(-50%, 10px); }
-    }
-  </style>
+/* NAV */
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#020617;
+  border-top:1px solid #0f172a;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.nav a{
+  padding:12px 0;
+  text-align:center;
+  color:var(--muted);
+  text-decoration:none;
+  font-size:12px;
+}
+.nav a.active{
+  color:var(--accent);
+  font-weight:bold;
+}
+</style>
 </head>
+
 <body>
-  <div class="page">
-    <h1 class="page-title">Daftar Pesanan</h1>
-    <div id="orderList" class="order-list">
-      <p class="info-text">Memuat pesanan...</p>
-    </div>
+
+<div class="wrapper">
+
+  <div class="header">
+    <h2>Riwayat Order</h2>
+    <div>Pesanan kamu</div>
   </div>
 
-  <div id="toast" class="toast"></div>
+  <div id="orderList">
+    <div class="card">Memuat pesanan...</div>
+  </div>
 
-  <nav class="bottom-nav">
-    <div class="bottom-nav-inner">
-      <a href="index.html" class="nav-item">
-        <span class="icon">🛒</span>
-        <span>Produk</span>
-      </a>
-      <a href="wallet.html" class="nav-item">
-        <span class="icon">💳</span>
-        <span>Wallet</span>
-      </a>
-      <a href="orders.html" class="nav-item active">
-        <span class="icon">📦</span>
-        <span>Orders</span>
-      </a>
-      <a href="profile.html" class="nav-item">
-        <span class="icon">👤</span>
-        <span>Profile</span>
-      </a>
-    </div>
-  </nav>
+</div>
 
-  <!-- Firebase compat SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+<div class="nav">
+  <a href="index.html">Store</a>
+  <a href="wallet.html">Wallet</a>
+  <a class="active" href="orders.html">Orders</a>
+  <a href="profile.html">Profile</a>
+</div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBpsfDmupS9wq-iNge5aYvknmw5bSryd3A",
-      authDomain: "toko-barmods.firebaseapp.com",
-      projectId: "toko-barmods",
-      storageBucket: "toko-barmods.firebasestorage.app",
-      messagingSenderId: "284047189012",
-      appId: "1:284047189012:web:6ef0c6891adab08a383301"
-    };
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,collection,query,where,orderBy,getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
+/* FIREBASE */
+const firebaseConfig={
+  apiKey:"AIzaSyDnmNDGMl-EB5b7PmIuhjg7-6D0yX58pJ8",
+  authDomain:"barmods-allsosmed.firebaseapp.com",
+  projectId:"barmods-allsosmed",
+  storageBucket:"barmods-allsosmed.appspot.com",
+  messagingSenderId:"864045617186",
+  appId:"1:864045617186:web:de246e8f46321015327a7b"
+};
 
-    const orderListEl = document.getElementById("orderList");
-    const toastEl     = document.getElementById("toast");
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-    function showToast(msg) {
-      toastEl.textContent = msg;
-      toastEl.classList.remove("show");
-      void toastEl.offsetWidth;
-      toastEl.classList.add("show");
-    }
+const orderList=document.getElementById("orderList");
 
-    function formatRupiah(num) {
-      if (typeof num === "string") {
-        const cleaned = num.replace(/[^0-9]/g, "");
-        if (!cleaned) return num;
-        num = parseInt(cleaned, 10);
-      }
-      if (isNaN(num)) return "Rp 0";
-      return "Rp " + num.toLocaleString("id-ID");
-    }
+/* LOAD ORDERS */
+onAuthStateChanged(auth,async user=>{
+  if(!user){location.href="login.html";return;}
 
-    function formatDate(ts) {
-      if (!ts) return "-";
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      const pad = (n) => String(n).padStart(2, "0");
-      const dd  = pad(d.getDate());
-      const mm  = pad(d.getMonth() + 1);
-      const yy  = d.getFullYear();
-      const hh  = pad(d.getHours());
-      const mi  = pad(d.getMinutes());
-      const ss  = pad(d.getSeconds());
-      return `${dd}/${mm}/${yy}, ${hh}.${mi}.${ss}`;
-    }
+  const q=query(
+    collection(db,"orders"),
+    where("userId","==",user.uid),
+    orderBy("createdAt","desc")
+  );
 
-    function statusBadgeClass(status) {
-      const s = (status || "").toLowerCase();
-      if (s === "success") return "badge-status badge-success";
-      if (s === "process" || s === "processing") return "badge-status badge-process";
-      if (s === "failed" || s === "cancel") return "badge-status badge-failed";
-      return "badge-status badge-pending";
-    }
+  const snap=await getDocs(q);
+  orderList.innerHTML="";
 
-    function statusLabel(status) {
-      const s = (status || "").toLowerCase();
-      if (s === "success") return "SUCCESS";
-      if (s === "process" || s === "processing") return "PROCESS";
-      if (s === "failed" || s === "cancel") return "FAILED";
-      return "PENDING";
-    }
+  if(snap.empty){
+    orderList.innerHTML='<div class="card">Belum ada pesanan</div>';
+    return;
+  }
 
-    async function markReceived(orderId) {
-      try {
-        await db.collection("orders").doc(orderId).update({
-          userReceived: true
-        });
-        showToast("Pesanan ditandai sudah diterima.");
-      } catch (err) {
-        console.error(err);
-        showToast("Gagal update status.");
-      }
-    }
+  snap.forEach(doc=>{
+    const o=doc.data();
+    const statusClass =
+      o.status==="success"?"success":
+      o.status==="error"?"error":"pending";
 
-    function renderOrders(docs) {
-      orderListEl.innerHTML = "";
+    orderList.innerHTML+=`
+      <div class="card">
+        <b>${o.product}</b><br><br>
+        <div>Input:</div>
+        <div style="color:var(--muted)">${o.input}</div><br>
+        <div>Harga: <b>Rp ${o.price.toLocaleString("id-ID")}</b></div><br>
+        <span class="status ${statusClass}">
+          ${o.status.toUpperCase()}
+        </span>
+      </div>
+    `;
+  });
+});
+</script>
 
-      if (!docs.length) {
-        orderListEl.innerHTML = '<p class="info-text">Belum ada pesanan.</p>';
-        return;
-      }
-
-      docs.forEach(doc => {
-        const data = doc.data();
-        const id   = doc.id;
-
-        const name   = data.productName || "Produk";
-        const status = data.status || "pending";
-        const date   = formatDate(data.createdAt);
-        const price  = data.price || 0;
-
-        // pakai field dataOrder
-        const userNoteRaw = data.dataOrder;
-        const userNote = userNoteRaw && String(userNoteRaw).trim() !== ""
-          ? String(userNoteRaw)
-          : "-";
-
-        const adminProdRaw = data.adminProduct;
-        const adminProd = adminProdRaw && String(adminProdRaw).trim() !== ""
-          ? String(adminProdRaw)
-          : "Belum dikirim";
-
-        const userReceived = !!data.userReceived;
-
-        const card = document.createElement("div");
-        card.className = "order-card";
-        card.innerHTML = `
-          <div class="order-title">${name}</div>
-          <div class="${statusBadgeClass(status)}">${statusLabel(status)}</div>
-
-          <div class="order-row">
-            <span class="label">Tanggal</span><br />
-            ${date}
-          </div>
-          <div class="order-row">
-            <span class="label">Harga</span><br />
-            <strong>${formatRupiah(price)}</strong>
-          </div>
-          <div class="order-row" style="margin-top:4px;">
-            <span class="label">Data yang kamu kirim</span><br />
-            ${userNote}
-          </div>
-          <div class="order-row" style="margin-top:4px;">
-            <span class="label">Produk dari admin</span><br />
-            ${adminProd}
-          </div>
-        `;
-
-        const footer = document.createElement("div");
-        footer.className = "order-footer";
-
-        const btn = document.createElement("button");
-        btn.className = "btn-received";
-        btn.textContent = "Tandai sudah diterima";
-
-        if (status.toLowerCase() !== "success" || userReceived) {
-          btn.disabled = true;
-        } else {
-          btn.addEventListener("click", async () => {
-            btn.disabled = true;
-            await markReceived(id);
-          });
-        }
-
-        footer.appendChild(btn);
-        card.appendChild(footer);
-
-        orderListEl.appendChild(card);
-      });
-    }
-
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-        return;
-      }
-
-      try {
-        // TANPA orderBy, lalu sort di client
-        const snap = await db.collection("orders")
-          .where("userId", "==", user.uid)
-          .get();
-
-        const sortedDocs = [...snap.docs].sort((a, b) => {
-          const ad = a.data();
-          const bd = b.data();
-          const ta = ad.createdAt && ad.createdAt.toMillis ? ad.createdAt.toMillis() : 0;
-          const tb = bd.createdAt && bd.createdAt.toMillis ? bd.createdAt.toMillis() : 0;
-          return tb - ta; // terbaru di atas
-        });
-
-        renderOrders(sortedDocs);
-      } catch (err) {
-        console.error("Error load orders:", err);
-        orderListEl.innerHTML = '<p class="info-text">Gagal memuat pesanan.</p>';
-      }
-    });
-  </script>
 </body>
-  </html>
+</html>
